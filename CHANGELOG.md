@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Pre-commit hook: `simple-git-hooks` + `lint-staged` runs `eslint --fix` on staged JS/TS/Vue files.
+- CI Vercel build sets local Supabase demo public env so prerender of `/` works without `.env`.
 
 ## 0.1.0 — 2026-08-15
 
