@@ -1,6 +1,11 @@
 export const CALENDAR_YEAR = 2026;
 export const CALENDAR_MONTH = 9;
 
+export const DEPARTURE_ISO = '2026-09-14';
+export const RETURN_ISO = '2026-10-01';
+export const SAD_CAT_ISO = '2026-09-13';
+export const HAPPY_CAT_ISO = RETURN_ISO;
+
 export const WEEKDAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'] as const;
 
 const FRENCH_MONTHS = [
@@ -99,6 +104,37 @@ export function buildMonthGrid(year: number, month: number): CalendarCell[] {
   return cells;
 }
 
+export function buildVacationGrid(): CalendarCell[] {
+  const cells = buildMonthGrid(CALENDAR_YEAR, CALENDAR_MONTH);
+  const slot = cells.findIndex((cell, index) => !cell.inMonth && cells[index - 1]?.inMonth);
+
+  if (slot !== -1) {
+    cells[slot] = {
+      isoDate: RETURN_ISO,
+      day: 1,
+      inMonth: true
+    };
+  }
+
+  return cells;
+}
+
+export function dayEmoji(isoDate: string): string | null {
+  if (isoDate === SAD_CAT_ISO) {
+    return '😿';
+  }
+
+  if (isoDate === HAPPY_CAT_ISO) {
+    return '😺';
+  }
+
+  return null;
+}
+
+export function isOctoberOverflow(isoDate: string): boolean {
+  return isoDate === RETURN_ISO;
+}
+
 export function groupSlotsByDate(slots: DateSlot[]): Record<string, string[]> {
   const grouped: Record<string, string[]> = {};
 
@@ -146,8 +182,16 @@ export function dayAriaLabel(
 ): string {
   const readable = formatDayLabel(isoDate);
 
+  if (isoDate === SAD_CAT_ISO) {
+    return `${readable}, Malta est tout triste, le maître part demain`;
+  }
+
+  if (isoDate === HAPPY_CAT_ISO) {
+    return `${readable}, Malta est tout content, le maître rentre`;
+  }
+
   if (!needsSitter(isoDate)) {
-    return `${readable}, le maître est un bon maître`;
+    return readable;
   }
 
   if (sitterNames.length === 0) {
