@@ -29,7 +29,7 @@ test('owner-covered days are not claimable, and the profile stays locked', async
   await waitForNuxtHydration(page);
 
   await expect(page.getByText('Bon maître').first()).toBeVisible();
-  await expect(page.getByRole('button', { name: /1 septembre 2026/i })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^mardi 1 septembre 2026,/ })).toHaveCount(0);
 
   const name = `Profil-${testInfo.parallelIndex}-${testInfo.retry}`;
   await page.getByPlaceholder('Tatie, voisin, cousin...').fill(name);
