@@ -18,7 +18,7 @@ watch(user, (value) => {
       class="size-8 mx-auto animate-spin text-primary"
     />
     <p class="text-muted">
-      Confirming your session…
+      Confirmation de ta session…
     </p>
   </UContainer>
 </template>

@@ -1,27 +1,45 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { PRESET_COLORS } from '@/utils/calendar';
-import { useSittersStore, type Sitter } from '@/stores/sitters';
+import type { Sitter } from '@/stores/sitters';
 
 const props = defineProps<{
   sitters: Sitter[];
   selectedSitterId: string | null;
+  selectedSitter: Sitter | null;
   loading: boolean;
 }>();
 
 const emit = defineEmits<{
   select: [id: string];
   create: [payload: { name: string; color: string }];
+  update: [payload: { name: string; color: string }];
 }>();
 
-const store = useSittersStore();
 const name = ref('');
 const color = ref<string>(PRESET_COLORS[0]);
 
-const canCreate = computed(() => name.value.trim().length > 0 && !props.loading);
+const locked = computed(() => Boolean(props.selectedSitter));
+const canSubmit = computed(() => name.value.trim().length > 0 && !props.loading);
+
+watch(
+  () => props.selectedSitter,
+  (sitter) => {
+    if (sitter) {
+      name.value = sitter.name;
+      color.value = sitter.color;
+    }
+  },
+  { immediate: true }
+);
 
 function submit() {
-  if (!canCreate.value) {
+  if (!canSubmit.value) {
+    return;
+  }
+
+  if (locked.value) {
+    emit('update', { name: name.value, color: color.value });
     return;
   }
 
@@ -31,27 +49,36 @@ function submit() {
 </script>
 
 <template>
-  <section class="rounded-3xl border border-default bg-default/80 p-5 shadow-sm sm:p-6">
+  <section class="rounded-3xl border border-default bg-default/80 p-4 shadow-sm sm:p-6">
     <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <h2 class="text-lg font-semibold text-highlighted">
-          Who are you?
+          {{ locked ? 'Ton profil' : 'Qui es-tu ?' }}
         </h2>
         <p class="text-sm text-muted">
-          No passwords. Pick your name, or join the crew with a color Malta will recognize.
+          <template v-if="locked">
+            Tu peux changer ton nom ou ta couleur. Plus question de passer sur le profil d'un autre.
+          </template>
+          <template v-else>
+            Pas de mot de passe. Choisis ton nom, ou rejoins l'équipe avec une couleur que Malta reconnaîtra.
+          </template>
         </p>
       </div>
       <p
-        v-if="store.selectedSitter"
-        class="text-sm font-medium"
+        v-if="selectedSitter"
+        class="inline-flex items-center gap-2 text-sm font-medium"
       >
-        Signed in as
-        <span class="font-semibold">{{ store.selectedSitter.name }}</span>
+        <span
+          class="size-3 rounded-full ring-2 ring-white"
+          :style="{ backgroundColor: selectedSitter.color }"
+        />
+        Tu es
+        <span class="font-semibold">{{ selectedSitter.name }}</span>
       </p>
     </div>
 
     <div
-      v-if="sitters.length"
+      v-if="!locked && sitters.length"
       class="mt-4 flex flex-wrap gap-2"
     >
       <UButton
@@ -75,17 +102,17 @@ function submit() {
     </div>
 
     <form
-      class="mt-5 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end"
+      class="mt-5 grid gap-3"
       @submit.prevent="submit"
     >
       <UFormField
-        label="New name"
+        :label="locked ? 'Ton nom' : 'Nouveau nom'"
         name="name"
       >
         <UInput
           v-model="name"
           name="name"
-          placeholder="Auntie, neighbor, cousin..."
+          placeholder="Tatie, voisin, cousin..."
           size="lg"
           :disabled="loading"
           autocomplete="nickname"
@@ -94,35 +121,37 @@ function submit() {
 
       <div class="flex flex-col gap-2">
         <p class="text-sm font-medium">
-          Color
+          Couleur
         </p>
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2.5">
           <button
             v-for="preset in PRESET_COLORS"
             :key="preset"
             type="button"
-            class="size-8 rounded-full border-2 transition"
-            :class="color === preset ? 'border-highlighted scale-110' : 'border-transparent'"
+            class="size-11 rounded-full border-2 shadow-sm transition touch-manipulation sm:size-9"
+            :class="color === preset ? 'border-highlighted scale-110' : 'border-white/80'"
             :style="{ backgroundColor: preset }"
-            :aria-label="`Choose color ${preset}`"
+            :aria-label="`Choisir la couleur ${preset}`"
             :aria-pressed="color === preset"
             @click="color = preset"
           />
           <input
             v-model="color"
             type="color"
-            class="size-8 cursor-pointer rounded-full border border-default bg-transparent p-0"
-            aria-label="Custom color"
+            class="size-11 cursor-pointer rounded-full border border-default bg-transparent p-0 sm:size-9"
+            aria-label="Couleur personnalisée"
           >
-          <UButton
-            type="submit"
-            label="Join the crew"
-            size="lg"
-            :loading="loading"
-            :disabled="!canCreate"
-          />
         </div>
       </div>
+
+      <UButton
+        type="submit"
+        :label="locked ? 'Enregistrer' : 'Rejoindre l\'équipe'"
+        size="lg"
+        class="w-full touch-manipulation sm:w-auto"
+        :loading="loading"
+        :disabled="!canSubmit"
+      />
     </form>
   </section>
 </template>

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import { useSupabaseClient } from '#imports';
 import { getErrorMessage } from '@/utils/error-message';
-import { groupSlotsByDate } from '@/utils/calendar';
+import { groupSlotsByDate, needsSitter } from '@/utils/calendar';
 import type { Database } from '@/types/database.types';
 
 export type Sitter = Database['public']['Tables']['sitters']['Row'];
@@ -44,8 +44,13 @@ export const useSittersStore = defineStore('sitters', () => {
   );
 
   const slotsByDate = computed(() => groupSlotsByDate(slots.value));
+  const profileLocked = computed(() => Boolean(selectedSitter.value));
 
   const selectSitter = (id: string) => {
+    if (selectedSitterId.value && selectedSitterId.value !== id) {
+      return;
+    }
+
     selectedSitterId.value = id;
     writeSelectedSitterId(id);
   };
@@ -81,7 +86,7 @@ export const useSittersStore = defineStore('sitters', () => {
 
       return { error: null };
     } catch (err: unknown) {
-      const errorMessage = getErrorMessage(err, 'Could not load the calendar');
+      const errorMessage = getErrorMessage(err, 'Impossible de charger le calendrier');
       error.value = errorMessage;
       return { error: errorMessage };
     } finally {
@@ -103,7 +108,7 @@ export const useSittersStore = defineStore('sitters', () => {
 
       if (insertError) {
         if (insertError.code === '23505') {
-          throw new Error('That name is already on the crew. Pick it from the list.');
+          throw new Error('Ce nom est déjà dans l\'équipe. Choisis-le dans la liste.');
         }
 
         throw insertError;
@@ -113,7 +118,52 @@ export const useSittersStore = defineStore('sitters', () => {
       selectSitter(data.id);
       return { data, error: null };
     } catch (err: unknown) {
-      const errorMessage = getErrorMessage(err, 'Could not create the sitter');
+      const errorMessage = getErrorMessage(err, 'Impossible de créer le profil');
+      error.value = errorMessage;
+      return { data: null, error: errorMessage };
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const updateSelectedSitter = async (name: string, color: string) => {
+    if (!selectedSitterId.value) {
+      const errorMessage = 'Choisis d\'abord qui tu es.';
+      error.value = errorMessage;
+      return { error: errorMessage };
+    }
+
+    const trimmed = name.trim();
+    if (!trimmed) {
+      const errorMessage = 'Il faut un nom.';
+      error.value = errorMessage;
+      return { error: errorMessage };
+    }
+
+    loading.value = true;
+    error.value = null;
+    const sitterId = selectedSitterId.value;
+
+    try {
+      const { data, error: updateError } = await supabase
+        .from('sitters')
+        .update({ name: trimmed, color })
+        .eq('id', sitterId)
+        .select()
+        .single();
+
+      if (updateError) {
+        if (updateError.code === '23505') {
+          throw new Error('Ce nom est déjà pris.');
+        }
+
+        throw updateError;
+      }
+
+      sitters.value = sitters.value.map(sitter => (sitter.id === sitterId ? data : sitter));
+      return { data, error: null };
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err, 'Impossible d\'enregistrer le profil');
       error.value = errorMessage;
       return { data: null, error: errorMessage };
     } finally {
@@ -122,8 +172,14 @@ export const useSittersStore = defineStore('sitters', () => {
   };
 
   const toggleAvailability = async (isoDate: string) => {
+    if (!needsSitter(isoDate)) {
+      const errorMessage = 'Ce jour-là, le maître est un bon maître.';
+      error.value = errorMessage;
+      return { error: errorMessage };
+    }
+
     if (!selectedSitterId.value) {
-      const errorMessage = 'Pick who you are first — then tap a day.';
+      const errorMessage = 'Choisis d\'abord qui tu es, puis tape un jour.';
       error.value = errorMessage;
       return { error: errorMessage };
     }
@@ -163,7 +219,7 @@ export const useSittersStore = defineStore('sitters', () => {
 
       return { error: null };
     } catch (err: unknown) {
-      const errorMessage = getErrorMessage(err, 'Could not update that day');
+      const errorMessage = getErrorMessage(err, 'Impossible de mettre à jour ce jour');
       error.value = errorMessage;
       return { error: errorMessage };
     } finally {
@@ -177,11 +233,13 @@ export const useSittersStore = defineStore('sitters', () => {
     selectedSitterId,
     selectedSitter,
     slotsByDate,
+    profileLocked,
     loading,
     error,
     selectSitter,
     fetchAll,
     createSitter,
+    updateSelectedSitter,
     toggleAvailability
   };
 });

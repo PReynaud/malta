@@ -60,10 +60,10 @@ async function submit() {
     <div class="space-y-6">
       <div class="space-y-2 text-center">
         <h1 class="text-2xl font-semibold text-highlighted">
-          {{ mode === 'signin' ? 'Sign in' : 'Create account' }}
+          {{ mode === 'signin' ? 'Connexion' : 'Créer un compte' }}
         </h1>
         <p class="text-muted">
-          Access {{ config.public.appName }}.
+          Accéder à {{ config.public.appName }}.
         </p>
       </div>
 
@@ -72,7 +72,7 @@ async function submit() {
         @submit.prevent="submit"
       >
         <UFormField
-          label="Email"
+          label="E-mail"
           name="email"
         >
           <UInput
@@ -85,7 +85,7 @@ async function submit() {
         </UFormField>
 
         <UFormField
-          label="Password"
+          label="Mot de passe"
           name="password"
         >
           <UInput
@@ -110,7 +110,7 @@ async function submit() {
           block
           size="lg"
           :loading="loading"
-          :label="mode === 'signin' ? 'Sign in' : 'Sign up'"
+          :label="mode === 'signin' ? 'Se connecter' : 'S\'inscrire'"
         />
       </form>
 
@@ -120,7 +120,7 @@ async function submit() {
           class="text-primary underline-offset-4 hover:underline"
           @click="mode = mode === 'signin' ? 'signup' : 'signin'"
         >
-          {{ mode === 'signin' ? 'Need an account? Sign up' : 'Already have an account? Sign in' }}
+          {{ mode === 'signin' ? 'Pas encore de compte ? S\'inscrire' : 'Déjà un compte ? Se connecter' }}
         </button>
       </p>
     </div>

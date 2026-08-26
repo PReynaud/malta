@@ -1,6 +1,6 @@
 # Malta
 
-September feeding calendar for Malta, a grey-and-white cat. Friends pick a name (no login), tap a day, and keep the tiny tiger fed.
+French-language September feeding calendar for Malta, a grey-and-white cat. Friends pick a name (no login), tap a vacation day, and keep the tiny tiger fed.
 
 Spawned from [nuxt-app-template](https://github.com/PReynaud/nuxt-app-template) by [software-factory](https://github.com/PReynaud/software-factory).
 

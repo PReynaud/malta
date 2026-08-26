@@ -25,7 +25,7 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (error: unknown) {
       return {
         data: null,
-        error: getErrorMessage(error, 'An error occurred during sign in')
+        error: getErrorMessage(error, 'Une erreur est survenue lors de la connexion')
       };
     }
   };
@@ -44,7 +44,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
         return {
           data: null,
-          error: 'An account already exists with this email. Please sign in.'
+          error: 'Un compte existe déjà avec cet e-mail. Connecte-toi.'
         };
       }
 
@@ -52,7 +52,7 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (error: unknown) {
       return {
         data: null,
-        error: getErrorMessage(error, 'An error occurred during sign up')
+        error: getErrorMessage(error, 'Une erreur est survenue lors de l\'inscription')
       };
     }
   };
@@ -69,7 +69,7 @@ export const useAuthStore = defineStore('auth', () => {
       return { error: null };
     } catch (error: unknown) {
       return {
-        error: getErrorMessage(error, 'An error occurred during sign out')
+        error: getErrorMessage(error, 'Une erreur est survenue lors de la déconnexion')
       };
     }
   };

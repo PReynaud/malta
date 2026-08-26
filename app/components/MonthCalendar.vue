@@ -8,6 +8,7 @@ import {
   isLightHex,
   isUncoveredDate,
   monthTitle,
+  needsSitter,
   WEEKDAY_LABELS
 } from '@/utils/calendar';
 import type { Sitter } from '@/stores/sitters';
@@ -34,12 +35,14 @@ const sitterById = computed(() => {
 });
 
 function namesForDate(isoDate: string): string[] {
-  return (props.slotsByDate[isoDate] ?? [])
-    .map(id => sitterById.value[id]?.name)
-    .filter((name): name is string => Boolean(name));
+  return sittersForDate(isoDate).map(sitter => sitter.name);
 }
 
 function sittersForDate(isoDate: string): Sitter[] {
+  if (!needsSitter(isoDate)) {
+    return [];
+  }
+
   return (props.slotsByDate[isoDate] ?? [])
     .map(id => sitterById.value[id])
     .filter((sitter): sitter is Sitter => Boolean(sitter));
@@ -52,50 +55,64 @@ function isSelectedOnDate(isoDate: string): boolean {
 
   return (props.slotsByDate[isoDate] ?? []).includes(props.selectedSitterId);
 }
+
+function sitterInitial(name: string): string {
+  const trimmed = name.trim();
+  return trimmed ? trimmed.charAt(0).toUpperCase() : '?';
+}
 </script>
 
 <template>
-  <section class="rounded-3xl border border-default bg-default/80 p-4 shadow-sm sm:p-6">
-    <div class="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+  <section class="min-w-0 rounded-3xl border border-default bg-default/80 p-3 shadow-sm sm:p-6">
+    <div class="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h2 class="text-2xl font-bold tracking-tight text-highlighted sm:text-3xl">
+        <h2 class="text-xl font-bold tracking-tight text-highlighted sm:text-3xl">
           {{ title }}
         </h2>
         <p class="text-sm text-muted">
-          Tap a day to add or remove yourself. Empty bowls glow so Malta does not go hungry.
+          <span class="sm:hidden">Tape un jour orange pour t'inscrire. Le reste, c'est le maître.</span>
+          <span class="hidden sm:inline">
+            Les jours orange, Malta a besoin de toi. Tape pour t'ajouter ou te retirer.
+            Les autres jours, le maître est un bon maître.
+          </span>
         </p>
       </div>
-      <div class="flex gap-3 text-xs sm:text-sm">
+      <div class="flex flex-wrap gap-x-3 gap-y-1 text-[11px] sm:text-sm">
         <span class="inline-flex items-center gap-1.5">
           <span class="size-3 rounded-sm bg-secondary-200 ring-1 ring-secondary-400" />
-          Needs a sitter
+          À pourvoir
         </span>
         <span class="inline-flex items-center gap-1.5">
           <span class="size-3 rounded-sm bg-muted ring-1 ring-default" />
-          Covered
+          Couvert
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="size-3 rounded-sm bg-malta-100 ring-1 ring-malta-300" />
+          Bon maître
         </span>
       </div>
     </div>
 
-    <div class="grid grid-cols-7 gap-1 text-center text-xs font-semibold uppercase tracking-wide text-muted sm:gap-2 sm:text-sm">
+    <div class="grid grid-cols-7 gap-0.5 text-center text-[10px] font-semibold uppercase tracking-wide text-muted sm:gap-2 sm:text-sm">
       <div
         v-for="label in WEEKDAY_LABELS"
         :key="label"
-        class="py-2"
+        class="py-1 sm:py-2"
       >
         {{ label }}
       </div>
     </div>
 
-    <div class="grid grid-cols-7 gap-1 sm:gap-2">
+    <div class="grid grid-cols-7 gap-0.5 sm:gap-2">
       <div
         v-for="(cell, index) in cells"
         :key="cell.inMonth ? cell.isoDate : `empty-${index}`"
+        class="min-w-0"
       >
         <button
-          v-if="cell.inMonth"
+          v-if="cell.inMonth && needsSitter(cell.isoDate)"
           type="button"
-          class="flex min-h-24 w-full flex-col rounded-2xl border p-2 text-left transition sm:min-h-32 sm:p-3"
+          class="flex min-h-[4.75rem] w-full flex-col rounded-xl border p-1 text-left transition touch-manipulation sm:min-h-32 sm:rounded-2xl sm:p-3"
           :class="[
             isUncoveredDate(cell.isoDate, slotsByDate)
               ? 'border-secondary-400 bg-secondary-100 hover:bg-secondary-200 dark:bg-secondary-900/40 dark:hover:bg-secondary-900/70'
@@ -106,30 +123,51 @@ function isSelectedOnDate(isoDate: string): boolean {
           :disabled="loading"
           @click="emit('selectDate', cell.isoDate)"
         >
-          <span class="flex items-center justify-between">
-            <span class="text-lg font-bold sm:text-xl">{{ cell.day }}</span>
+          <span class="flex items-start justify-between gap-0.5">
+            <span class="text-sm font-bold sm:text-xl">{{ cell.day }}</span>
             <span
               v-if="isUncoveredDate(cell.isoDate, slotsByDate)"
-              class="rounded-full bg-secondary-500 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white sm:text-xs"
+              class="rounded-full bg-secondary-500 px-1 py-px text-[9px] font-semibold uppercase tracking-wide text-white sm:px-2 sm:py-0.5 sm:text-xs"
             >
-              Hungry
+              Faim
             </span>
           </span>
 
-          <ul class="mt-2 flex flex-1 flex-col gap-1">
+          <ul class="mt-1 flex flex-1 flex-wrap content-start gap-1 sm:mt-2 sm:flex-col sm:flex-nowrap">
             <li
               v-for="sitter in sittersForDate(cell.isoDate)"
               :key="sitter.id"
-              class="truncate rounded-full px-2 py-0.5 text-[11px] font-medium sm:text-xs"
+              class="flex size-6 items-center justify-center rounded-full text-[10px] font-bold sm:size-auto sm:truncate sm:px-2 sm:py-0.5 sm:text-xs sm:font-medium"
               :style="{
                 backgroundColor: sitter.color,
                 color: isLightHex(sitter.color) ? '#1F1E1B' : '#FAFAF9'
               }"
+              :title="sitter.name"
             >
-              {{ sitter.name }}
+              <span class="sm:hidden">{{ sitterInitial(sitter.name) }}</span>
+              <span class="hidden sm:inline">{{ sitter.name }}</span>
             </li>
           </ul>
         </button>
+
+        <div
+          v-else-if="cell.inMonth"
+          class="flex min-h-[4.75rem] w-full flex-col rounded-xl border border-malta-200 bg-malta-50 p-1 text-left dark:border-malta-800 dark:bg-malta-900/40 sm:min-h-32 sm:rounded-2xl sm:p-3"
+          :aria-label="dayAriaLabel(cell.isoDate, [])"
+        >
+          <span class="flex items-start justify-between gap-0.5">
+            <span class="text-sm font-bold text-malta-800 dark:text-malta-100 sm:text-xl">{{ cell.day }}</span>
+            <span
+              class="max-w-[3rem] rounded-full bg-malta-200 px-1 py-px text-center text-[8px] font-semibold leading-tight text-malta-800 sm:max-w-none sm:px-2 sm:py-0.5 sm:text-[11px]"
+              title="Le maître est un bon maître"
+            >
+              Bon maître
+            </span>
+          </span>
+          <p class="mt-auto hidden pt-2 text-[11px] leading-snug text-malta-700 dark:text-malta-200 sm:block">
+            Le maître est un bon maître
+          </p>
+        </div>
       </div>
     </div>
   </section>
