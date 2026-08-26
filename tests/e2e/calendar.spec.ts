@@ -1,4 +1,4 @@
-import { expect, test, devices } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { waitForNuxtHydration } from './helpers/wait-for-hydration';
 
 test('a sitter can join, claim a hungry day, then leave it', async ({ page }, testInfo) => {
@@ -44,7 +44,9 @@ test('owner-covered days are not claimable, and the profile stays locked', async
 
 test.describe('mobile calendar', () => {
   test.use({
-    ...devices['iPhone 12']
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true
   });
 
   test('fits the September grid on a phone', async ({ page }, testInfo) => {
