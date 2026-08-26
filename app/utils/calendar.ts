@@ -1,17 +1,46 @@
 export const CALENDAR_YEAR = 2026;
 export const CALENDAR_MONTH = 9;
 
-export const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
+export const WEEKDAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'] as const;
+
+const FRENCH_MONTHS = [
+  'janvier',
+  'février',
+  'mars',
+  'avril',
+  'mai',
+  'juin',
+  'juillet',
+  'août',
+  'septembre',
+  'octobre',
+  'novembre',
+  'décembre'
+] as const;
+
+const FRENCH_WEEKDAYS = [
+  'dimanche',
+  'lundi',
+  'mardi',
+  'mercredi',
+  'jeudi',
+  'vendredi',
+  'samedi'
+] as const;
 
 export const PRESET_COLORS = [
-  '#6B7280',
-  '#9CA3AF',
-  '#E5E7EB',
-  '#F5F0E8',
-  '#D97736',
-  '#E8A87C',
-  '#C45C26',
-  '#7A8B7A'
+  '#FF1744',
+  '#FF3D00',
+  '#FF6D00',
+  '#FFD600',
+  '#76FF03',
+  '#00E676',
+  '#1DE9B6',
+  '#00E5FF',
+  '#2979FF',
+  '#651FFF',
+  '#D500F9',
+  '#FF4081'
 ] as const;
 
 export interface CalendarCell {
@@ -34,11 +63,15 @@ export function toIsoDate(year: number, month: number, day: number): string {
 }
 
 export function monthTitle(year: number, month: number): string {
-  return new Date(Date.UTC(year, month - 1, 1)).toLocaleString('en-GB', {
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC'
-  });
+  const name = FRENCH_MONTHS[month - 1] ?? 'mois';
+  return `${name.charAt(0).toUpperCase()}${name.slice(1)} ${year}`;
+}
+
+export function formatDayLabel(isoDate: string): string {
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  const weekday = FRENCH_WEEKDAYS[date.getUTCDay()] ?? 'jour';
+  const monthName = FRENCH_MONTHS[date.getUTCMonth()] ?? 'mois';
+  return `${weekday} ${date.getUTCDate()} ${monthName} ${date.getUTCFullYear()}`;
 }
 
 export function buildMonthGrid(year: number, month: number): CalendarCell[] {
@@ -78,11 +111,20 @@ export function groupSlotsByDate(slots: DateSlot[]): Record<string, string[]> {
   return grouped;
 }
 
+export function needsSitter(isoDate: string): boolean {
+  if (!isoDate.startsWith(`${CALENDAR_YEAR}-${pad2(CALENDAR_MONTH)}-`)) {
+    return false;
+  }
+
+  const day = Number(isoDate.slice(-2));
+  return day === 4 || day === 5 || (day >= 14 && day <= 30);
+}
+
 export function isUncoveredDate(
   isoDate: string,
   slotsByDate: Record<string, string[]>
 ): boolean {
-  return (slotsByDate[isoDate] ?? []).length === 0;
+  return needsSitter(isoDate) && (slotsByDate[isoDate] ?? []).length === 0;
 }
 
 export function isLightHex(color: string): boolean {
@@ -102,17 +144,15 @@ export function dayAriaLabel(
   isoDate: string,
   sitterNames: string[]
 ): string {
-  const date = new Date(`${isoDate}T00:00:00Z`);
-  const readable = date.toLocaleString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC'
-  });
+  const readable = formatDayLabel(isoDate);
 
-  if (sitterNames.length === 0) {
-    return `${readable}, nobody signed up yet`;
+  if (!needsSitter(isoDate)) {
+    return `${readable}, le maître est un bon maître`;
   }
 
-  return `${readable}, ${sitterNames.join(', ')} feeding Malta`;
+  if (sitterNames.length === 0) {
+    return `${readable}, personne n'est encore prévu`;
+  }
+
+  return `${readable}, nourri par ${sitterNames.join(', ')}`;
 }

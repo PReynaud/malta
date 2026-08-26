@@ -3,17 +3,17 @@ import { useHead, useSeoMeta, useRuntimeConfig } from '#imports';
 
 const config = useRuntimeConfig();
 const title = config.public.appName;
-const description = 'September feeding calendar for Malta, the grey-and-white cat.';
+const description = 'Calendrier de septembre pour nourrir Malta, le chat gris et blanc.';
 
 useHead({
   meta: [
-    { name: 'viewport', content: 'width=device-width, initial-scale=1' }
+    { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' }
   ],
   link: [
     { rel: 'icon', href: '/favicon.ico' }
   ],
   htmlAttrs: {
-    lang: 'en'
+    lang: 'fr'
   }
 });
 
@@ -36,7 +36,7 @@ useSeoMeta({
     <USeparator />
     <UFooter>
       <template #left>
-        <p class="text-sm text-muted">
+        <p class="px-3 text-sm text-muted sm:px-0">
           {{ title }} • © {{ new Date().getFullYear() }}
         </p>
       </template>

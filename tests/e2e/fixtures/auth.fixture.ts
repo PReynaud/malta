@@ -25,9 +25,9 @@ export const test = base.extend<AuthFixtures>({
 
     const form = page.locator('form').first();
 
-    await form.getByLabel('Email').fill(account.email);
+    await form.getByLabel('E-mail').fill(account.email);
     await form.locator('input[name="password"]').fill(account.password);
-    await form.getByRole('button', { name: 'Sign in' }).click();
+    await form.getByRole('button', { name: 'Se connecter' }).click();
 
     await expect(page).toHaveURL(/\/home/);
 

@@ -45,15 +45,15 @@ export default defineNuxtConfig({
   pwa: {
     registerType: 'autoUpdate',
     manifest: {
-      name: 'Malta',
+      name: 'Malta — calendrier des croquettes',
       short_name: 'Malta',
-      description: 'September feeding calendar for Malta, the grey-and-white cat.',
+      description: 'Calendrier de septembre pour nourrir Malta, le chat gris et blanc.',
       theme_color: '#7D7A72',
       background_color: '#F7F1E8',
       display: 'standalone',
       orientation: 'portrait',
       start_url: '/',
-      lang: 'en',
+      lang: 'fr',
       icons: [
         {
           src: 'pwa-192x192.png',

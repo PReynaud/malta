@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, devices } from '@playwright/test';
 import { waitForNuxtHydration } from './helpers/wait-for-hydration';
 
 test('a sitter can join, claim a hungry day, then leave it', async ({ page }, testInfo) => {
@@ -6,18 +6,65 @@ test('a sitter can join, claim a hungry day, then leave it', async ({ page }, te
   await waitForNuxtHydration(page);
 
   const name = `Sitter-${testInfo.parallelIndex}-${testInfo.retry}`;
-  await page.getByPlaceholder('Auntie, neighbor, cousin...').fill(name);
-  await page.getByRole('button', { name: 'Join the crew' }).click();
+  await page.getByPlaceholder('Tatie, voisin, cousin...').fill(name);
+  await page.getByRole('button', { name: 'Rejoindre l\'équipe' }).click();
 
-  await expect(page.getByRole('button', { name, exact: true })).toBeVisible();
+  await expect(page.getByText(`Tu es ${name}`)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Rejoindre l\'équipe' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Enregistrer' })).toBeVisible();
 
-  const day = page.getByRole('button', { name: /^1 September 2026,/ });
-  await expect(day).toContainText('Hungry');
+  const day = page.getByRole('button', { name: /^vendredi 4 septembre 2026,/ });
+  await expect(day).toContainText('Faim');
 
   await day.click();
   await expect(day).toContainText(name);
-  await expect(day).not.toContainText('Hungry');
+  await expect(day).not.toContainText('Faim');
 
   await day.click();
-  await expect(day).toContainText('Hungry');
+  await expect(day).toContainText('Faim');
+});
+
+test('owner-covered days are not claimable, and the profile stays locked', async ({ page }, testInfo) => {
+  await page.goto('/');
+  await waitForNuxtHydration(page);
+
+  await expect(page.getByText('Bon maître').first()).toBeVisible();
+  await expect(page.getByRole('button', { name: /1 septembre 2026/i })).toHaveCount(0);
+
+  const name = `Profil-${testInfo.parallelIndex}-${testInfo.retry}`;
+  await page.getByPlaceholder('Tatie, voisin, cousin...').fill(name);
+  await page.getByRole('button', { name: 'Rejoindre l\'équipe' }).click();
+  await expect(page.getByText(`Tu es ${name}`)).toBeVisible();
+
+  const renamed = `${name}-edit`;
+  await page.getByPlaceholder('Tatie, voisin, cousin...').fill(renamed);
+  await page.getByRole('button', { name: 'Enregistrer' }).click();
+  await expect(page.getByText(`Tu es ${renamed}`)).toBeVisible();
+});
+
+test.describe('mobile calendar', () => {
+  test.use({
+    ...devices['iPhone 12']
+  });
+
+  test('fits the September grid on a phone', async ({ page }, testInfo) => {
+    await page.goto('/');
+    await waitForNuxtHydration(page);
+
+    await expect(page.getByRole('heading', { name: 'Qui nourrit Malta ?' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Septembre 2026' })).toBeVisible();
+
+    const overflowing = await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1
+    );
+    expect(overflowing).toBe(false);
+
+    const name = `Mobile-${testInfo.parallelIndex}-${testInfo.retry}`;
+    await page.getByPlaceholder('Tatie, voisin, cousin...').fill(name);
+    await page.getByRole('button', { name: 'Rejoindre l\'équipe' }).click();
+
+    const day = page.getByRole('button', { name: /^vendredi 4 septembre 2026,/ });
+    await day.click();
+    await expect(day).not.toContainText('Faim');
+  });
 });
