@@ -163,6 +163,21 @@ export function isUncoveredDate(
   return needsSitter(isoDate) && (slotsByDate[isoDate] ?? []).length === 0;
 }
 
+export function sitterNeedDates(): string[] {
+  const dates = [toIsoDate(CALENDAR_YEAR, CALENDAR_MONTH, 4), toIsoDate(CALENDAR_YEAR, CALENDAR_MONTH, 5)];
+
+  for (let day = 14; day <= 30; day += 1) {
+    dates.push(toIsoDate(CALENDAR_YEAR, CALENDAR_MONTH, day));
+  }
+
+  return dates;
+}
+
+export function isWeekend(isoDate: string): boolean {
+  const weekday = new Date(`${isoDate}T00:00:00Z`).getUTCDay();
+  return weekday === 0 || weekday === 6;
+}
+
 export function isLightHex(color: string): boolean {
   const hex = color.replace('#', '');
   if (hex.length !== 6) {

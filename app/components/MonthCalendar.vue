@@ -23,7 +23,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  selectDate: [isoDate: string];
+  selectDate: [isoDate: string, event: MouseEvent];
 }>();
 
 const title = monthTitle(CALENDAR_YEAR, CALENDAR_MONTH);
@@ -118,7 +118,7 @@ function sitterInitial(name: string): string {
           ]"
           :aria-label="dayAriaLabel(cell.isoDate, namesForDate(cell.isoDate))"
           :disabled="loading"
-          @click="emit('selectDate', cell.isoDate)"
+          @click="emit('selectDate', cell.isoDate, $event)"
         >
           <span class="flex items-start justify-between gap-0.5">
             <span class="text-sm font-bold sm:text-xl">{{ cell.day }}</span>

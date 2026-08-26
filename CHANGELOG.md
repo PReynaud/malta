@@ -8,7 +8,7 @@
 - Countdowns to 14 September (departure) and 1 October (return).
 - Crying cat on 13 September, happy cat cell on 1 October; owner-day "Bon maître" badge removed.
 - Collapsible care instructions (food, water, litter, pets, toys, emergencies) with placeholders.
-- Brighter join / save profile button.
+- Patoune scores, a closable blinking coverage banner, a leaderboard with silly top-five titles, and cat-face bursts on tap.
 
 - September feeding calendar: pick a sitter by name and color, claim or leave a day, highlight empty bowls.
 - Warm grey-and-white Malta theme (no login on the public calendar).

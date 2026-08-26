@@ -17,10 +17,13 @@ test('a sitter can join, claim a hungry day, then leave it', async ({ page }, te
   await expect(day).toContainText('Faim');
 
   await day.click();
+  await expect(page.getByTestId('cat-mood-burst')).toContainText('😺');
   await expect(day).toContainText(name);
   await expect(day).not.toContainText('Faim');
+  await expect(page.getByText(/Ministre des croquettes/)).toBeVisible();
 
   await day.click();
+  await expect(page.getByTestId('cat-mood-burst')).toContainText('😿');
   await expect(day).toContainText('Faim');
 });
 
@@ -72,6 +75,16 @@ test.describe('mobile calendar', () => {
     await day.click();
     await expect(day).not.toContainText('Faim');
   });
+});
+
+test('the blinking patoune banner can be dismissed', async ({ page }) => {
+  await page.goto('/');
+  await waitForNuxtHydration(page);
+
+  const banner = page.getByLabel('Jauge collective de Malta');
+  await expect(banner).toBeVisible();
+  await page.getByRole('button', { name: 'Fermer la pub' }).click();
+  await expect(banner).toHaveCount(0);
 });
 
 test('care instructions expand a placeholder section', async ({ page }) => {
