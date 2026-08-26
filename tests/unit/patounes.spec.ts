@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { isWeekend, sitterNeedDates } from '../../app/utils/calendar';
 import {
   coverageMeter,
+  formatPatouneDelta,
   patouneLabel,
   PATOUNE_TITLES,
   rankSitters,
+  scoreDeltaForToggle,
   scoreSitter,
   streakBonusForDates
 } from '../../app/utils/patounes';
@@ -81,5 +83,12 @@ describe('patounes', () => {
     });
     expect(patouneLabel(1)).toBe('1 patoune');
     expect(patouneLabel(20)).toBe('20 patounes');
+  });
+
+  it('computes the patoune swing when claiming or leaving a day', () => {
+    expect(scoreDeltaForToggle('a', '2026-09-04', {}, true)).toBe(20);
+    expect(scoreDeltaForToggle('a', '2026-09-04', { '2026-09-04': ['a'] }, false)).toBe(-20);
+    expect(formatPatouneDelta(20)).toBe('+20');
+    expect(formatPatouneDelta(-20)).toBe('-20');
   });
 });

@@ -1,7 +1,7 @@
 import { defineAppConfig } from '#imports';
 
 export default defineAppConfig({
-  name: 'Malta',
+  name: 'Malta Calendar',
   ui: {
     colors: {
       primary: 'malta',

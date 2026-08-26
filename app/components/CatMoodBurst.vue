@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { formatPatouneDelta } from '@/utils/patounes';
 
 const props = defineProps<{
   mood: 'happy' | 'sad' | null;
+  delta: number;
   x: number;
   y: number;
   nonce: number;
@@ -24,7 +26,7 @@ watch(
     }
     hideTimer = setTimeout(() => {
       shown.value = false;
-    }, 900);
+    }, 1100);
   }
 );
 
@@ -50,8 +52,15 @@ onUnmounted(() => {
       :style="{ left: `${x}px`, top: `${y}px` }"
       aria-hidden="true"
     >
-      <span class="malta-mood-burst block text-5xl sm:text-6xl">
-        {{ mood === 'happy' ? '😺' : '😿' }}
+      <span class="malta-mood-burst flex flex-col items-center gap-0.5">
+        <span class="text-5xl leading-none sm:text-6xl">
+          {{ mood === 'happy' ? '😺' : '😿' }}
+        </span>
+        <span
+          class="rounded-full bg-black/80 px-2 py-0.5 text-sm font-black tabular-nums text-yellow-300 shadow-sm sm:text-base"
+        >
+          {{ formatPatouneDelta(delta) }} 🐾
+        </span>
       </span>
     </div>
   </Teleport>

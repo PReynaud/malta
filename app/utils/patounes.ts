@@ -146,3 +146,28 @@ export function coverageMeter(slotsByDate: Record<string, string[]>): CoverageMe
 export function patouneLabel(count: number): string {
   return count === 1 ? '1 patoune' : `${count} patounes`;
 }
+
+export function formatPatouneDelta(delta: number): string {
+  if (delta > 0) {
+    return `+${delta}`;
+  }
+
+  return String(delta);
+}
+
+export function scoreDeltaForToggle(
+  sitterId: string,
+  isoDate: string,
+  slotsByDate: Record<string, string[]>,
+  adding: boolean
+): number {
+  const before = scoreSitter(sitterId, slotsByDate).total;
+  const next: Record<string, string[]> = { ...slotsByDate };
+  const current = [...(next[isoDate] ?? [])];
+
+  next[isoDate] = adding
+    ? (current.includes(sitterId) ? current : [...current, sitterId])
+    : current.filter(id => id !== sitterId);
+
+  return scoreSitter(sitterId, next).total - before;
+}

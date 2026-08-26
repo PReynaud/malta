@@ -18,12 +18,14 @@ test('a sitter can join, claim a hungry day, then leave it', async ({ page }, te
 
   await day.click();
   await expect(page.getByTestId('cat-mood-burst')).toContainText('😺');
+  await expect(page.getByTestId('cat-mood-burst')).toContainText('+20');
   await expect(day).toContainText(name);
   await expect(day).not.toContainText('Faim');
   await expect(page.getByText(/Ministre des croquettes/)).toBeVisible();
 
   await day.click();
   await expect(page.getByTestId('cat-mood-burst')).toContainText('😿');
+  await expect(page.getByTestId('cat-mood-burst')).toContainText('-20');
   await expect(day).toContainText('Faim');
 });
 
@@ -85,6 +87,8 @@ test('the blinking patoune banner can be dismissed', async ({ page }) => {
   await expect(banner).toBeVisible();
   await page.getByRole('button', { name: 'Fermer la pub' }).click();
   await expect(banner).toHaveCount(0);
+  await page.getByRole('button', { name: 'Réafficher la pub' }).click();
+  await expect(banner).toBeVisible();
 });
 
 test('care instructions expand a placeholder section', async ({ page }) => {
@@ -95,6 +99,13 @@ test('care instructions expand a placeholder section', async ({ page }) => {
   await expect(page.getByText('Image à venir').first()).toBeHidden();
 
   await page.locator('summary', { hasText: 'Nourriture' }).click();
+  await expect(page.getByText(/distributeur dans le couloir/)).toBeVisible();
   await expect(page.getByText('Image à venir').first()).toBeVisible();
-  await expect(page.getByText(/À remplir/).first()).toBeVisible();
+  await expect(page.getByText(/pâtée/i).first()).toBeVisible();
+
+  await page.locator('summary', { hasText: 'Saletés' }).click();
+  await expect(page.getByText(/papier toilette/)).toBeVisible();
+
+  await page.locator('summary', { hasText: 'Urgences' }).click();
+  await expect(page.getByRole('link', { name: /Vétérinaire de Malta/ })).toBeVisible();
 });
