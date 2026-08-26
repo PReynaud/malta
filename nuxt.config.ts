@@ -22,7 +22,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      appName: 'Malta'
+      appName: 'Malta Calendar'
     }
   },
 
@@ -45,7 +45,7 @@ export default defineNuxtConfig({
   pwa: {
     registerType: 'autoUpdate',
     manifest: {
-      name: 'Malta — calendrier des croquettes',
+      name: 'Malta Calendar',
       short_name: 'Malta',
       description: 'Calendrier de septembre pour nourrir Malta, le chat gris et blanc.',
       theme_color: '#7D7A72',

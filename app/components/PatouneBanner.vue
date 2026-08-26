@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed } from 'vue';
 import { coverageMeter } from '@/utils/patounes';
-
-const BANNER_KEY = 'malta-patoune-banner';
+import { usePatouneBanner } from '@/composables/use-patoune-banner';
 
 const props = defineProps<{
   slotsByDate: Record<string, string[]>;
 }>();
 
-const visible = ref(true);
+const { visible, dismiss } = usePatouneBanner();
 const meter = computed(() => coverageMeter(props.slotsByDate));
 
 const message = computed(() => {
@@ -18,19 +17,6 @@ const message = computed(() => {
     : `ENCORE ${current.remaining} JOUR${current.remaining > 1 ? 'S' : ''} À FAIM`;
 
   return `★ MALTA EST NOURRI À ${current.percent} % ★ ${remaining} ★ CLIQUE UN JOUR ORANGE — GAGNE DES PATOUNES ★ ${current.covered}/${current.total} BOLS ★`;
-});
-
-function dismiss() {
-  visible.value = false;
-  if (import.meta.client) {
-    window.localStorage.setItem(BANNER_KEY, '1');
-  }
-}
-
-onMounted(() => {
-  if (window.localStorage.getItem(BANNER_KEY) === '1') {
-    visible.value = false;
-  }
 });
 </script>
 

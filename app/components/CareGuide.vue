@@ -27,22 +27,32 @@ import { CARE_SECTIONS } from '@/data/care-guide';
         </summary>
 
         <div class="space-y-3 px-4 pb-4">
-          <p class="whitespace-pre-line text-sm text-muted">
-            {{ section.body || section.placeholder }}
-          </p>
-
-          <img
-            v-if="section.imageSrc"
-            :src="section.imageSrc"
-            :alt="section.imageAlt"
-            class="w-full rounded-2xl object-cover"
+          <template
+            v-for="(block, index) in section.blocks"
+            :key="`${section.id}-${index}`"
           >
-          <div
-            v-else
-            class="flex min-h-28 items-center justify-center rounded-2xl border-2 border-dashed border-malta-300 bg-malta-50 text-sm text-muted dark:border-malta-700 dark:bg-malta-900/40 sm:min-h-36"
-          >
-            Image à venir
-          </div>
+            <p
+              v-if="block.type === 'p'"
+              class="text-sm leading-relaxed text-muted"
+            >
+              {{ block.text }}
+            </p>
+            <a
+              v-else-if="block.type === 'link'"
+              :href="block.href"
+              class="inline-flex text-sm font-semibold text-secondary-700 underline-offset-4 hover:underline dark:text-secondary-300"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {{ block.label }}
+            </a>
+            <div
+              v-else
+              class="flex min-h-28 items-center justify-center rounded-2xl border-2 border-dashed border-malta-300 bg-malta-50 text-sm text-muted dark:border-malta-700 dark:bg-malta-900/40 sm:min-h-36"
+            >
+              Image à venir
+            </div>
+          </template>
         </div>
       </details>
     </div>
