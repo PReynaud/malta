@@ -28,8 +28,11 @@ test('owner-covered days are not claimable, and the profile stays locked', async
   await page.goto('/');
   await waitForNuxtHydration(page);
 
-  await expect(page.getByText('Bon maître').first()).toBeVisible();
-  await expect(page.getByRole('button', { name: /^mardi 1 septembre 2026,/ })).toHaveCount(0);
+  await expect(page.getByText('Bon maître')).toHaveCount(0);
+  await expect(page.getByLabel('dimanche 13 septembre 2026, Malta est tout triste, le maître part demain')).toBeVisible();
+  await expect(page.getByLabel('jeudi 1 octobre 2026, Malta est tout content, le maître rentre')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Jusqu\'au 14 septembre' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Jusqu\'au 1er octobre' })).toBeVisible();
 
   const name = `Profil-${testInfo.parallelIndex}-${testInfo.retry}`;
   await page.getByPlaceholder('Tatie, voisin, cousin...').fill(name);
@@ -69,4 +72,16 @@ test.describe('mobile calendar', () => {
     await day.click();
     await expect(day).not.toContainText('Faim');
   });
+});
+
+test('care instructions expand a placeholder section', async ({ page }) => {
+  await page.goto('/');
+  await waitForNuxtHydration(page);
+
+  await expect(page.getByRole('heading', { name: 'Instructions' })).toBeVisible();
+  await expect(page.getByText('Image à venir').first()).toBeHidden();
+
+  await page.locator('summary', { hasText: 'Nourriture' }).click();
+  await expect(page.getByText('Image à venir').first()).toBeVisible();
+  await expect(page.getByText(/À remplir/).first()).toBeVisible();
 });

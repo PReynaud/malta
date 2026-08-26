@@ -144,14 +144,22 @@ function submit() {
         </div>
       </div>
 
-      <UButton
+      <button
         type="submit"
-        :label="locked ? 'Enregistrer' : 'Rejoindre l\'équipe'"
-        size="lg"
-        class="w-full touch-manipulation sm:w-auto"
-        :loading="loading"
-        :disabled="!canSubmit"
-      />
+        class="malta-cta w-full touch-manipulation sm:w-auto sm:justify-self-start"
+        :disabled="!canSubmit || loading"
+      >
+        <span
+          v-if="loading"
+          class="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+          aria-hidden="true"
+        />
+        <span
+          v-else
+          aria-hidden="true"
+        >{{ locked ? '✨' : '🐾' }}</span>
+        {{ locked ? 'Enregistrer' : 'Rejoindre l\'équipe' }}
+      </button>
     </form>
   </section>
 </template>

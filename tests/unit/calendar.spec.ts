@@ -1,14 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildMonthGrid,
+  buildVacationGrid,
   CALENDAR_MONTH,
   CALENDAR_YEAR,
   dayAriaLabel,
+  dayEmoji,
   groupSlotsByDate,
+  HAPPY_CAT_ISO,
   isLightHex,
   isUncoveredDate,
   monthTitle,
   needsSitter,
+  RETURN_ISO,
+  SAD_CAT_ISO,
   toIsoDate
 } from '../../app/utils/calendar';
 
@@ -25,15 +30,25 @@ describe('calendar', () => {
     expect(inMonth.at(-1)).toMatchObject({ day: 30, isoDate: '2026-09-30' });
   });
 
+  it('tacks 1 October onto the September grid', () => {
+    const cells = buildVacationGrid();
+    const dated = cells.filter(cell => cell.inMonth);
+
+    expect(dated).toHaveLength(31);
+    expect(dated.at(-1)).toMatchObject({ day: 1, isoDate: RETURN_ISO });
+    expect(dayEmoji(SAD_CAT_ISO)).toBe('😿');
+    expect(dayEmoji(HAPPY_CAT_ISO)).toBe('😺');
+    expect(dayEmoji('2026-09-14')).toBeNull();
+  });
+
   it('marks only vacation days as needing a sitter', () => {
     expect(needsSitter('2026-09-04')).toBe(true);
     expect(needsSitter('2026-09-05')).toBe(true);
     expect(needsSitter('2026-09-14')).toBe(true);
     expect(needsSitter('2026-09-30')).toBe(true);
     expect(needsSitter('2026-09-01')).toBe(false);
-    expect(needsSitter('2026-09-03')).toBe(false);
-    expect(needsSitter('2026-09-06')).toBe(false);
     expect(needsSitter('2026-09-13')).toBe(false);
+    expect(needsSitter(RETURN_ISO)).toBe(false);
   });
 
   it('groups slots and flags uncovered vacation days', () => {
@@ -54,8 +69,12 @@ describe('calendar', () => {
   });
 
   it('describes a day for screen readers in French', () => {
-    expect(dayAriaLabel(toIsoDate(2026, 9, 2), [])).toBe(
-      'mercredi 2 septembre 2026, le maître est un bon maître'
+    expect(dayAriaLabel(toIsoDate(2026, 9, 2), [])).toBe('mercredi 2 septembre 2026');
+    expect(dayAriaLabel(SAD_CAT_ISO, [])).toBe(
+      'dimanche 13 septembre 2026, Malta est tout triste, le maître part demain'
+    );
+    expect(dayAriaLabel(HAPPY_CAT_ISO, [])).toBe(
+      'jeudi 1 octobre 2026, Malta est tout content, le maître rentre'
     );
     expect(dayAriaLabel('2026-09-04', [])).toBe(
       'vendredi 4 septembre 2026, personne n\'est encore prévu'

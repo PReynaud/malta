@@ -1,0 +1,50 @@
+<script setup lang="ts">
+import { CARE_SECTIONS } from '@/data/care-guide';
+</script>
+
+<template>
+  <section class="rounded-3xl border border-default bg-default/80 p-4 shadow-sm sm:p-6">
+    <h2 class="text-xl font-bold tracking-tight text-highlighted sm:text-2xl">
+      Instructions
+    </h2>
+    <p class="mt-1 text-sm text-muted">
+      Tout ce qu'il faut savoir pour chouchouter Malta. Déplie une section.
+    </p>
+
+    <div class="mt-4 space-y-2">
+      <details
+        v-for="section in CARE_SECTIONS"
+        :key="section.id"
+        class="group rounded-2xl border border-default bg-elevated open:bg-default"
+      >
+        <summary class="flex cursor-pointer list-none items-center gap-3 rounded-2xl p-4 text-left font-semibold text-highlighted touch-manipulation [&::-webkit-details-marker]:hidden">
+          <span
+            class="text-xl"
+            aria-hidden="true"
+          >{{ section.emoji }}</span>
+          <span>{{ section.title }}</span>
+          <span class="ml-auto text-muted transition group-open:rotate-180">⌄</span>
+        </summary>
+
+        <div class="space-y-3 px-4 pb-4">
+          <p class="whitespace-pre-line text-sm text-muted">
+            {{ section.body || section.placeholder }}
+          </p>
+
+          <img
+            v-if="section.imageSrc"
+            :src="section.imageSrc"
+            :alt="section.imageAlt"
+            class="w-full rounded-2xl object-cover"
+          >
+          <div
+            v-else
+            class="flex min-h-28 items-center justify-center rounded-2xl border-2 border-dashed border-malta-300 bg-malta-50 text-sm text-muted dark:border-malta-700 dark:bg-malta-900/40 sm:min-h-36"
+          >
+            Image à venir
+          </div>
+        </div>
+      </details>
+    </div>
+  </section>
+</template>
