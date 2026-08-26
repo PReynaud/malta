@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import {
-  buildMonthGrid,
-  CALENDAR_MONTH,
-  CALENDAR_YEAR,
+  buildVacationGrid,
   dayAriaLabel,
+  dayEmoji,
   isLightHex,
+  isOctoberOverflow,
   isUncoveredDate,
   monthTitle,
   needsSitter,
+  CALENDAR_MONTH,
+  CALENDAR_YEAR,
   WEEKDAY_LABELS
 } from '@/utils/calendar';
 import type { Sitter } from '@/stores/sitters';
@@ -25,7 +27,7 @@ const emit = defineEmits<{
 }>();
 
 const title = monthTitle(CALENDAR_YEAR, CALENDAR_MONTH);
-const cells = buildMonthGrid(CALENDAR_YEAR, CALENDAR_MONTH);
+const cells = buildVacationGrid();
 const sitterById = computed(() => {
   const map: Record<string, Sitter> = {};
   for (const sitter of props.sitters) {
@@ -70,10 +72,9 @@ function sitterInitial(name: string): string {
           {{ title }}
         </h2>
         <p class="text-sm text-muted">
-          <span class="sm:hidden">Tape un jour orange pour t'inscrire. Le reste, c'est le maître.</span>
+          <span class="sm:hidden">Tape un jour orange pour t'inscrire.</span>
           <span class="hidden sm:inline">
             Les jours orange, Malta a besoin de toi. Tape pour t'ajouter ou te retirer.
-            Les autres jours, le maître est un bon maître.
           </span>
         </p>
       </div>
@@ -85,10 +86,6 @@ function sitterInitial(name: string): string {
         <span class="inline-flex items-center gap-1.5">
           <span class="size-3 rounded-sm bg-muted ring-1 ring-default" />
           Couvert
-        </span>
-        <span class="inline-flex items-center gap-1.5">
-          <span class="size-3 rounded-sm bg-malta-100 ring-1 ring-malta-300" />
-          Bon maître
         </span>
       </div>
     </div>
@@ -106,7 +103,7 @@ function sitterInitial(name: string): string {
     <div class="grid grid-cols-7 gap-0.5 sm:gap-2">
       <div
         v-for="(cell, index) in cells"
-        :key="cell.inMonth ? cell.isoDate : `empty-${index}`"
+        :key="cell.isoDate || `empty-${index}`"
         class="min-w-0"
       >
         <button
@@ -152,21 +149,30 @@ function sitterInitial(name: string): string {
 
         <div
           v-else-if="cell.inMonth"
-          class="flex min-h-[4.75rem] w-full flex-col rounded-xl border border-malta-200 bg-malta-50 p-1 text-left dark:border-malta-800 dark:bg-malta-900/40 sm:min-h-32 sm:rounded-2xl sm:p-3"
+          class="flex min-h-[4.75rem] w-full flex-col items-center rounded-xl border p-1 text-center sm:min-h-32 sm:rounded-2xl sm:p-3"
+          :class="dayEmoji(cell.isoDate)
+            ? 'border-malta-200 bg-default dark:border-malta-700 dark:bg-malta-900/30'
+            : 'border-malta-200/80 bg-malta-50/80 dark:border-malta-800 dark:bg-malta-900/20'"
           :aria-label="dayAriaLabel(cell.isoDate, [])"
         >
-          <span class="flex items-start justify-between gap-0.5">
-            <span class="text-sm font-bold text-malta-800 dark:text-malta-100 sm:text-xl">{{ cell.day }}</span>
+          <span class="flex w-full items-start justify-between gap-0.5">
+            <span class="text-sm font-bold text-malta-800 dark:text-malta-100 sm:text-xl">
+              {{ cell.day }}
+            </span>
             <span
-              class="max-w-[3rem] rounded-full bg-malta-200 px-1 py-px text-center text-[8px] font-semibold leading-tight text-malta-800 sm:max-w-none sm:px-2 sm:py-0.5 sm:text-[11px]"
-              title="Le maître est un bon maître"
+              v-if="isOctoberOverflow(cell.isoDate)"
+              class="text-[9px] font-semibold uppercase tracking-wide text-muted sm:text-xs"
             >
-              Bon maître
+              oct.
             </span>
           </span>
-          <p class="mt-auto hidden pt-2 text-[11px] leading-snug text-malta-700 dark:text-malta-200 sm:block">
-            Le maître est un bon maître
-          </p>
+          <span
+            v-if="dayEmoji(cell.isoDate)"
+            class="mt-auto text-2xl leading-none sm:text-4xl"
+            aria-hidden="true"
+          >
+            {{ dayEmoji(cell.isoDate) }}
+          </span>
         </div>
       </div>
     </div>

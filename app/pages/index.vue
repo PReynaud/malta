@@ -24,6 +24,8 @@ onMounted(() => {
       </p>
     </section>
 
+    <TripCountdowns />
+
     <UAlert
       v-if="store.error"
       color="error"
@@ -48,5 +50,7 @@ onMounted(() => {
       :loading="store.loading"
       @select-date="store.toggleAvailability"
     />
+
+    <CareGuide />
   </div>
 </template>
