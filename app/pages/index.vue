@@ -1,51 +1,50 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useRuntimeConfig } from '#imports';
+import { onMounted } from 'vue';
+import { useSittersStore } from '@/stores/sitters';
 
-const config = useRuntimeConfig();
-const appName = computed(() => config.public.appName);
+const store = useSittersStore();
+
+onMounted(() => {
+  store.fetchAll();
+});
 </script>
 
 <template>
-  <div>
-    <UPageHero
-      :title="appName"
-      description="Start here. Sign in to reach the authenticated home, then grow the product through BMAD specs, tests, and implementation."
-      :links="[{
-        label: 'Sign in',
-        to: '/login',
-        trailingIcon: 'i-lucide-arrow-right',
-        size: 'xl'
-      }, {
-        label: 'How it works',
-        to: '#features',
-        size: 'xl',
-        color: 'neutral',
-        variant: 'subtle'
-      }]"
+  <div class="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6">
+    <section class="text-center sm:text-left">
+      <p class="text-sm font-semibold uppercase tracking-widest text-secondary-600">
+        Tiny tiger on holiday watch
+      </p>
+      <h1 class="mt-2 text-4xl font-black tracking-tight text-highlighted sm:text-5xl">
+        Who feeds Malta?
+      </h1>
+      <p class="mx-auto mt-3 max-w-2xl text-pretty text-muted sm:mx-0">
+        The grey-and-white boss needs breakfast while we are away.
+        Pick your name, tap a September day, and keep that little engine purring.
+      </p>
+    </section>
+
+    <UAlert
+      v-if="store.error"
+      color="error"
+      variant="subtle"
+      :title="store.error"
     />
 
-    <UPageSection
-      id="features"
-      title="Ready to ship a new app"
-      description="This template is the factory shell: auth, Pinia, tests, and agent tooling already wired."
-      :features="[{
-        icon: 'i-lucide-shield-check',
-        title: 'Supabase auth',
-        description: 'Email and password with RLS-ready profiles from the first migration.'
-      }, {
-        icon: 'i-lucide-layers',
-        title: 'Pinia stores',
-        description: 'Shared state and remote fetching live in stores, not in pages.'
-      }, {
-        icon: 'i-lucide-flask-conical',
-        title: 'Tests first',
-        description: 'Vitest for stores and helpers, Playwright against local Supabase.'
-      }, {
-        icon: 'i-lucide-smartphone',
-        title: 'Installable PWA',
-        description: 'Remove the PWA files with factory-new-app --no-pwa if you do not need them.'
-      }]"
+    <SitterPicker
+      :sitters="store.sitters"
+      :selected-sitter-id="store.selectedSitterId"
+      :loading="store.loading"
+      @select="store.selectSitter"
+      @create="({ name, color }) => store.createSitter(name, color)"
+    />
+
+    <MonthCalendar
+      :sitters="store.sitters"
+      :slots-by-date="store.slotsByDate"
+      :selected-sitter-id="store.selectedSitterId"
+      :loading="store.loading"
+      @select-date="store.toggleAvailability"
     />
   </div>
 </template>

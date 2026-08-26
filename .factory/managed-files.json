@@ -1,8 +1,8 @@
 {
   "version": 1,
   "tokens": {
-    "APP_NAME": "App",
-    "APP_SLUG": "app"
+    "APP_NAME": "Malta",
+    "APP_SLUG": "malta"
   },
   "files": [
     "package.json",

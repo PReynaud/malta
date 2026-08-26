@@ -22,7 +22,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      appName: 'App'
+      appName: 'Malta'
     }
   },
 
@@ -45,11 +45,11 @@ export default defineNuxtConfig({
   pwa: {
     registerType: 'autoUpdate',
     manifest: {
-      name: 'App',
-      short_name: 'App',
-      description: 'Nuxt app template with Supabase auth.',
-      theme_color: '#0f766e',
-      background_color: '#ffffff',
+      name: 'Malta',
+      short_name: 'Malta',
+      description: 'September feeding calendar for Malta, the grey-and-white cat.',
+      theme_color: '#7D7A72',
+      background_color: '#F7F1E8',
       display: 'standalone',
       orientation: 'portrait',
       start_url: '/',
@@ -89,6 +89,7 @@ export default defineNuxtConfig({
   },
 
   supabase: {
+    redirect: false,
     redirectOptions: {
       login: '/login',
       callback: '/confirm',

@@ -1,6 +1,6 @@
 {
   "templateVersion": "0.1.0",
-  "createdAt": "2026-08-15",
+  "createdAt": "2026-08-26",
   "bmad": {
     "version": "6.11.0",
     "modules": ["core", "bmm"]

@@ -1,14 +1,16 @@
-# Nuxt app template
+# Malta
 
-GitHub Template used by [software-factory](https://github.com/PReynaud/software-factory) to spawn new Nuxt 4 apps.
+September feeding calendar for Malta, a grey-and-white cat. Friends pick a name (no login), tap a day, and keep the tiny tiger fed.
+
+Spawned from [nuxt-app-template](https://github.com/PReynaud/nuxt-app-template) by [software-factory](https://github.com/PReynaud/software-factory).
 
 ## Stack
 
 - Nuxt 4, Nuxt UI 4, Pinia
-- Supabase (SQL migrations + RLS + Auth)
+- Supabase (SQL migrations + RLS)
 - Playwright (local Supabase only) and Vitest
 - BMAD Method, Cursor rules, MCP (Nuxt, Nuxt UI, Playwright, Supabase, Vercel)
-- PWA via `@vite-pwa/nuxt` (remove with `factory-new-app --no-pwa`)
+- PWA via `@vite-pwa/nuxt`
 
 ## Setup
 
@@ -22,7 +24,7 @@ pnpm pwa:icons
 pnpm dev
 ```
 
-Add `http://localhost:3000/confirm` to the local Supabase Auth redirect URLs.
+Production URL (after DNS): https://malta.pierre-reynaud.fr
 
 ## Production migrations
 
@@ -48,7 +50,3 @@ Playwright refuses non-local Supabase URLs. Create accounts per test; they are d
 ## Language
 
 Conversation may be English or French. All produced artifacts are English.
-
-## Create a new app
-
-Use the `factory-new-app` skill in `software-factory`. Do not copy this repo by hand if you need DNS, Vercel, and a Supabase project.

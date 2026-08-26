@@ -25,6 +25,9 @@ Thumbs.db
 .env.*
 !.env.example
 
+# Vercel CLI / `nuxt build --preset=vercel` output
+.vercel
+
 # BMAD local artifacts
 _bmad-output/
 

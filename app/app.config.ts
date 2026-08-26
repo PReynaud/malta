@@ -1,11 +1,12 @@
 import { defineAppConfig } from '#imports';
 
 export default defineAppConfig({
-  name: 'App',
+  name: 'Malta',
   ui: {
     colors: {
-      primary: 'green',
-      neutral: 'slate'
+      primary: 'malta',
+      secondary: 'hungry',
+      neutral: 'stone'
     }
   }
 });

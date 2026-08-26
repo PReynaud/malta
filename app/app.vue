@@ -3,7 +3,7 @@ import { useHead, useSeoMeta, useRuntimeConfig } from '#imports';
 
 const config = useRuntimeConfig();
 const title = config.public.appName;
-const description = 'A Nuxt app with Supabase authentication.';
+const description = 'September feeding calendar for Malta, the grey-and-white cat.';
 
 useHead({
   meta: [

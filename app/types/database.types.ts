@@ -9,6 +9,35 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      feeding_slots: {
+        Row: {
+          created_at: string
+          feed_date: string
+          id: string
+          sitter_id: string
+        }
+        Insert: {
+          created_at?: string
+          feed_date: string
+          id?: string
+          sitter_id: string
+        }
+        Update: {
+          created_at?: string
+          feed_date?: string
+          id?: string
+          sitter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feeding_slots_sitter_id_fkey"
+            columns: ["sitter_id"]
+            isOneToOne: false
+            referencedRelation: "sitters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -24,6 +53,27 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+        }
+        Relationships: []
+      }
+      sitters: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
         }
         Relationships: []
       }
