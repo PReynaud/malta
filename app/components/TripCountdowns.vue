@@ -1,23 +1,20 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import {
   DEPARTURE_AT_MS,
   RETURN_AT_MS,
-  remainingTime,
-  type RemainingTime
+  remainingTime
 } from '@/utils/countdown';
 import { pad2 } from '@/utils/calendar';
 
-const now = ref(0);
+const now = ref(Date.now());
 let timer: ReturnType<typeof setInterval> | null = null;
 
-const departure = ref<RemainingTime>(remainingTime(DEPARTURE_AT_MS, 0));
-const homecoming = ref<RemainingTime>(remainingTime(RETURN_AT_MS, 0));
+const departure = computed(() => remainingTime(DEPARTURE_AT_MS, now.value));
+const homecoming = computed(() => remainingTime(RETURN_AT_MS, now.value));
 
 function tick() {
   now.value = Date.now();
-  departure.value = remainingTime(DEPARTURE_AT_MS, now.value);
-  homecoming.value = remainingTime(RETURN_AT_MS, now.value);
 }
 
 onMounted(() => {
@@ -57,7 +54,7 @@ onUnmounted(() => {
       >
         <div class="rounded-2xl bg-white/80 px-1 py-2 text-center dark:bg-malta-900/60">
           <p class="text-xl font-black tabular-nums sm:text-2xl">
-            {{ now ? departure.days : '—' }}
+            {{ departure.days }}
           </p>
           <p class="text-[10px] font-semibold uppercase tracking-wide text-muted">
             jours
@@ -65,7 +62,7 @@ onUnmounted(() => {
         </div>
         <div class="rounded-2xl bg-white/80 px-1 py-2 text-center dark:bg-malta-900/60">
           <p class="text-xl font-black tabular-nums sm:text-2xl">
-            {{ now ? pad2(departure.hours) : '—' }}
+            {{ pad2(departure.hours) }}
           </p>
           <p class="text-[10px] font-semibold uppercase tracking-wide text-muted">
             heures
@@ -73,7 +70,7 @@ onUnmounted(() => {
         </div>
         <div class="rounded-2xl bg-white/80 px-1 py-2 text-center dark:bg-malta-900/60">
           <p class="text-xl font-black tabular-nums sm:text-2xl">
-            {{ now ? pad2(departure.minutes) : '—' }}
+            {{ pad2(departure.minutes) }}
           </p>
           <p class="text-[10px] font-semibold uppercase tracking-wide text-muted">
             min
@@ -81,7 +78,7 @@ onUnmounted(() => {
         </div>
         <div class="rounded-2xl bg-white/80 px-1 py-2 text-center dark:bg-malta-900/60">
           <p class="text-xl font-black tabular-nums sm:text-2xl">
-            {{ now ? pad2(departure.seconds) : '—' }}
+            {{ pad2(departure.seconds) }}
           </p>
           <p class="text-[10px] font-semibold uppercase tracking-wide text-muted">
             sec
@@ -113,7 +110,7 @@ onUnmounted(() => {
       >
         <div class="rounded-2xl bg-white/80 px-1 py-2 text-center dark:bg-malta-900/60">
           <p class="text-xl font-black tabular-nums sm:text-2xl">
-            {{ now ? homecoming.days : '—' }}
+            {{ homecoming.days }}
           </p>
           <p class="text-[10px] font-semibold uppercase tracking-wide text-muted">
             jours
@@ -121,7 +118,7 @@ onUnmounted(() => {
         </div>
         <div class="rounded-2xl bg-white/80 px-1 py-2 text-center dark:bg-malta-900/60">
           <p class="text-xl font-black tabular-nums sm:text-2xl">
-            {{ now ? pad2(homecoming.hours) : '—' }}
+            {{ pad2(homecoming.hours) }}
           </p>
           <p class="text-[10px] font-semibold uppercase tracking-wide text-muted">
             heures
@@ -129,7 +126,7 @@ onUnmounted(() => {
         </div>
         <div class="rounded-2xl bg-white/80 px-1 py-2 text-center dark:bg-malta-900/60">
           <p class="text-xl font-black tabular-nums sm:text-2xl">
-            {{ now ? pad2(homecoming.minutes) : '—' }}
+            {{ pad2(homecoming.minutes) }}
           </p>
           <p class="text-[10px] font-semibold uppercase tracking-wide text-muted">
             min
@@ -137,7 +134,7 @@ onUnmounted(() => {
         </div>
         <div class="rounded-2xl bg-white/80 px-1 py-2 text-center dark:bg-malta-900/60">
           <p class="text-xl font-black tabular-nums sm:text-2xl">
-            {{ now ? pad2(homecoming.seconds) : '—' }}
+            {{ pad2(homecoming.seconds) }}
           </p>
           <p class="text-[10px] font-semibold uppercase tracking-wide text-muted">
             sec
