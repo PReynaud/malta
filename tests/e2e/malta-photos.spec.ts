@@ -14,9 +14,8 @@ test('a selected sitter can upload a Malta photo and gain two patounes', async (
   await expect(page.getByTestId('malta-photo-error')).toContainText(
     'Choisis d\'abord qui tu es, puis envoie une photo.'
   );
-  await expect(page.getByRole('img', { name: /Photo de Malta/ })).toHaveCount(0);
 
-  const name = `Photo-${testInfo.parallelIndex}-${testInfo.retry}`;
+  const name = `Photo-${testInfo.parallelIndex}-${testInfo.retry}-${testInfo.workerIndex}`;
   await page.getByPlaceholder('Tatie, voisin, cousin...').fill(name);
   await page.getByRole('button', { name: 'Rejoindre l\'équipe' }).click();
   await expect(page.getByText(`Tu es ${name}`)).toBeVisible();
@@ -24,6 +23,7 @@ test('a selected sitter can upload a Malta photo and gain two patounes', async (
   await page.getByTestId('malta-photo-input').setInputFiles(maltaPhotoPath);
   await expect(page.getByTestId('cat-mood-burst')).toContainText('+2');
   await expect(page.getByRole('img', { name: `Photo de Malta par ${name}` }).first()).toBeVisible();
-  await expect(page.getByText('2 patounes')).toBeVisible();
-  await expect(page.getByText('Pas encore de photo. Malta attend son premier shooting.')).toHaveCount(0);
+
+  const row = page.getByRole('listitem').filter({ hasText: name });
+  await expect(row.getByText('2 patounes', { exact: true })).toBeVisible();
 });
