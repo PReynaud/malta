@@ -12,6 +12,7 @@
 - Care instructions filled in (food, water, litter, pets, toys, mess, emergencies).
 - Calendar updates live across devices; a feeding day locks after Paris midnight.
 - Selected sitters can upload Malta photos for +2 patounes; a scrolling gallery sits under the leaderboard.
+- Water care photos: automatic fountain and refill bowls; other instruction photos stay placeholders.
 
 - September feeding calendar: pick a sitter by name and color, claim or leave a day, highlight empty bowls.
 - Warm grey-and-white Malta theme (no login on the public calendar).

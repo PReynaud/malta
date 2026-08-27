@@ -92,7 +92,7 @@ test('the blinking patoune banner can be dismissed', async ({ page }) => {
   await expect(banner).toBeVisible();
 });
 
-test('care instructions expand a placeholder section', async ({ page }) => {
+test('care instructions show water photos and leftover placeholders', async ({ page }) => {
   await page.goto('/');
   await waitForNuxtHydration(page);
 
@@ -103,6 +103,17 @@ test('care instructions expand a placeholder section', async ({ page }) => {
   await expect(page.getByText(/distributeur dans le couloir/)).toBeVisible();
   await expect(page.getByText('Image à venir').first()).toBeVisible();
   await expect(page.getByText(/pâtée/i).first()).toBeVisible();
+
+  await page.locator('summary', { hasText: 'Eau' }).click();
+  const water = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Eau' }) });
+  const fountain = water.getByRole('img', { name: 'La fontaine à eau automatique de Malta' });
+  const bowl = water.getByRole('img', { name: 'Une gamelle à remplir de temps en temps' });
+  await expect(fountain).toBeVisible();
+  await expect(bowl).toBeVisible();
+  await expect(fountain).toHaveAttribute('src', '/care/water-fountain.jpg');
+  await expect(bowl).toHaveAttribute('src', '/care/water-bowl.jpg');
+  await expect(water.getByText(/gamelles à remplir/)).toBeVisible();
+  await expect(water.getByText('Image à venir')).toHaveCount(0);
 
   await page.locator('summary', { hasText: 'Saletés' }).click();
   await expect(page.getByText(/papier toilette/)).toBeVisible();

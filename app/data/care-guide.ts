@@ -1,6 +1,6 @@
 export type CareBlock
   = { type: 'p'; text: string }
-    | { type: 'image'; alt: string }
+    | { type: 'image'; alt: string; src?: string }
     | { type: 'link'; href: string; label: string };
 
 export interface CareSection {
@@ -44,12 +44,22 @@ export const CARE_SECTIONS: CareSection[] = [
         text: 'C\'est automatique ! Mais attention : au bout de 10 jours, il faudra remettre un peu d\'eau. Le mécanisme est ultraaaa sensible, mieux vaut récupérer un verre et remplir tout doucement.'
       },
       {
+        type: 'image',
+        alt: 'La fontaine à eau automatique de Malta',
+        src: '/care/water-fountain.jpg'
+      },
+      {
         type: 'p',
         text: 'Si jamais la fontaine ne fonctionne plus, il faut la nettoyer un peu. Pour la remettre en marche, les connecteurs doivent être très secs… et il faut souvent s\'y reprendre à plusieurs fois. Appelez-moi si besoin.'
       },
       {
+        type: 'p',
+        text: 'Il y a aussi des gamelles à remplir de temps en temps, comme celle-ci, en plus de la fontaine automatique.'
+      },
+      {
         type: 'image',
-        alt: 'La fontaine à eau de Malta'
+        alt: 'Une gamelle à remplir de temps en temps',
+        src: '/care/water-bowl.jpg'
       }
     ]
   },

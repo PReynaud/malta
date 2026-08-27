@@ -46,8 +46,18 @@ import { CARE_SECTIONS } from '@/data/care-guide';
             >
               {{ block.label }}
             </a>
+            <img
+              v-else-if="block.type === 'image' && block.src"
+              :src="block.src"
+              :alt="block.alt"
+              width="1536"
+              height="2048"
+              class="mx-auto h-auto max-h-96 w-auto max-w-full rounded-2xl object-contain"
+              loading="lazy"
+              decoding="async"
+            >
             <div
-              v-else
+              v-else-if="block.type === 'image'"
               class="flex min-h-28 items-center justify-center rounded-2xl border-2 border-dashed border-malta-300 bg-malta-50 text-sm text-muted dark:border-malta-700 dark:bg-malta-900/40 sm:min-h-36"
             >
               Image à venir
