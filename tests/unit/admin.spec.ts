@@ -44,6 +44,14 @@ describe('admin', () => {
     expect(source).toContain('navigateFallbackDenylist: [/^\\/admin/]');
   });
 
+  it('retries unauthorized admin loads and keeps partial data', () => {
+    const source = readFileSync(resolve(process.cwd(), 'app/stores/admin.ts'), 'utf8');
+    expect(source).toContain('refreshSession');
+    expect(source).toContain('isUnauthorizedError');
+    expect(source).toContain('if (sittersResult.data)');
+    expect(source).toContain('if (photosResult.data)');
+  });
+
   it('rejects missing users, the wrong email, or a user-editable role', () => {
     expect(isAdminUser(null)).toBe(false);
     expect(isAdminUser(undefined)).toBe(false);
