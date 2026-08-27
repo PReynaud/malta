@@ -120,6 +120,11 @@ test('care instructions show food and water photos, with leftover placeholders',
   await expect(water.getByText(/gamelles à remplir/)).toBeVisible();
   await expect(water.getByText('Image à venir')).toHaveCount(0);
 
+  await page.locator('summary', { hasText: 'Litières' }).click();
+  const litter = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Litières' }) });
+  await expect(litter.getByRole('img', { name: 'Une des litières de Malta, avec la pelle sur le couvercle' })).toHaveAttribute('src', '/care/litter-box.jpg');
+  await expect(litter.getByText('Image à venir')).toHaveCount(0);
+
   await page.locator('summary', { hasText: 'Saletés' }).click();
   await expect(page.getByText(/papier toilette/)).toBeVisible();
 

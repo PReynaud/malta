@@ -97,12 +97,13 @@ export const CARE_SECTIONS: CareSection[] = [
         text: 'Toutes les semaines, il serait bien de nettoyer un peu les litières 💩. C\'est facile : un petit sac plastique blanc, la pelle, et on ramasse. Une fois les 3 litières nettoyées, le sac peut être jeté.'
       },
       {
-        type: 'p',
-        text: 'Il y a un vide-ordures sur le palier, pas besoin de descendre. En face de l\'appart, c\'est la porte à gauche (en face des portes des deux autres voisins).'
+        type: 'image',
+        alt: 'Une des litières de Malta, avec la pelle sur le couvercle',
+        src: '/care/litter-box.jpg'
       },
       {
-        type: 'image',
-        alt: 'Les litières de Malta'
+        type: 'p',
+        text: 'Il y a un vide-ordures sur le palier, pas besoin de descendre. En face de l\'appart, c\'est la porte à gauche (en face des portes des deux autres voisins).'
       }
     ]
   },

@@ -105,8 +105,18 @@ describe('care guide', () => {
     ]);
   });
 
+  it('shows a litter box in the litières section', () => {
+    expect(imageBlocks('litter')).toEqual([
+      {
+        type: 'image',
+        alt: 'Une des litières de Malta, avec la pelle sur le couvercle',
+        src: '/care/litter-box.jpg'
+      }
+    ]);
+  });
+
   it('keeps photo placeholders in every other care section', () => {
-    for (const section of CARE_SECTIONS.filter(section => !['water', 'food', 'emergency'].includes(section.id))) {
+    for (const section of CARE_SECTIONS.filter(section => !['water', 'food', 'emergency', 'litter'].includes(section.id))) {
       const photos = section.blocks.filter(block => block.type === 'image');
 
       expect(photos.length).toBeGreaterThan(0);
