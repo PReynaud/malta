@@ -39,6 +39,11 @@ describe('admin', () => {
     expect(source).toContain(`adminEmail: '${ADMIN_EMAIL}'`);
   });
 
+  it('does not let the PWA serve the homepage for /admin navigations', () => {
+    const source = readFileSync(resolve(process.cwd(), 'nuxt.config.ts'), 'utf8');
+    expect(source).toContain('navigateFallbackDenylist: [/^\\/admin/]');
+  });
+
   it('rejects missing users, the wrong email, or a user-editable role', () => {
     expect(isAdminUser(null)).toBe(false);
     expect(isAdminUser(undefined)).toBe(false);

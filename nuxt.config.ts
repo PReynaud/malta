@@ -76,6 +76,9 @@ export default defineNuxtConfig({
     },
     workbox: {
       navigateFallback: '/',
+      // Admin routes are not prerendered. Without this denylist the SW
+      // intercepts /admin/login and serves the cached homepage instead.
+      navigateFallbackDenylist: [/^\/admin/],
       cleanupOutdatedCaches: true,
       globPatterns: ['**/*.{js,css,html,png,svg,ico,txt,woff2}']
     },
