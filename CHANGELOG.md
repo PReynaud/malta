@@ -10,6 +10,7 @@
 - Header title is Malta Calendar; blinking banner can be shown again next to dark mode.
 - Profile card folds away; claiming a day shows the cat face plus the patoune swing.
 - Care instructions filled in (food, water, litter, pets, toys, mess, emergencies).
+- Selected sitters can upload Malta photos for +2 patounes; a scrolling gallery sits under the leaderboard.
 
 - September feeding calendar: pick a sitter by name and color, claim or leave a day, highlight empty bowls.
 - Warm grey-and-white Malta theme (no login on the public calendar).

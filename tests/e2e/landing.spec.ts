@@ -14,5 +14,7 @@ test('landing page shows the September feeding calendar', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Rejoindre l\'équipe' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Instructions' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Classement des patounes' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Photos de Malta' })).toBeVisible();
+  await expect(page.getByText('Pas encore de photo. Malta attend son premier shooting.')).toBeVisible();
   await expect(page.getByLabel('Jauge collective de Malta')).toBeVisible();
 });
