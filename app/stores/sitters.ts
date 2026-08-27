@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import { useSupabaseClient } from '#imports';
 import { getErrorMessage } from '@/utils/error-message';
-import { groupSlotsByDate, needsSitter } from '@/utils/calendar';
+import { groupSlotsByDate, isFeedDateLocked, needsSitter } from '@/utils/calendar';
 import type { Database } from '@/types/database.types';
 
 export type Sitter = Database['public']['Tables']['sitters']['Row'];
@@ -46,6 +46,28 @@ export const useSittersStore = defineStore('sitters', () => {
   const slotsByDate = computed(() => groupSlotsByDate(slots.value));
   const profileLocked = computed(() => Boolean(selectedSitter.value));
 
+  let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
+
+  function upsertById<T extends { id: string }>(list: T[], row: T): T[] {
+    const index = list.findIndex(item => item.id === row.id);
+    if (index === -1) {
+      return [...list, row];
+    }
+
+    const next = [...list];
+    next[index] = row;
+    return next;
+  }
+
+  function asRow<T extends { id: string }>(value: unknown): T | null {
+    if (!value || typeof value !== 'object' || !('id' in value)) {
+      return null;
+    }
+
+    const id = (value as { id: unknown }).id;
+    return typeof id === 'string' ? value as T : null;
+  }
+
   const selectSitter = (id: string) => {
     if (selectedSitterId.value && selectedSitterId.value !== id) {
       return;
@@ -55,9 +77,11 @@ export const useSittersStore = defineStore('sitters', () => {
     writeSelectedSitterId(id);
   };
 
-  const fetchAll = async () => {
-    loading.value = true;
-    error.value = null;
+  const fetchAll = async (options: { silent?: boolean } = {}) => {
+    if (!options.silent) {
+      loading.value = true;
+      error.value = null;
+    }
 
     try {
       const [sittersResult, slotsResult] = await Promise.all([
@@ -86,11 +110,17 @@ export const useSittersStore = defineStore('sitters', () => {
 
       return { error: null };
     } catch (err: unknown) {
+      if (options.silent) {
+        return { error: getErrorMessage(err, 'Impossible de charger le calendrier') };
+      }
+
       const errorMessage = getErrorMessage(err, 'Impossible de charger le calendrier');
       error.value = errorMessage;
       return { error: errorMessage };
     } finally {
-      loading.value = false;
+      if (!options.silent) {
+        loading.value = false;
+      }
     }
   };
 
@@ -184,6 +214,12 @@ export const useSittersStore = defineStore('sitters', () => {
       return { error: errorMessage };
     }
 
+    if (isFeedDateLocked(isoDate)) {
+      const errorMessage = 'Ce jour est déjà commencé : plus d\'ajout ni de retrait.';
+      error.value = errorMessage;
+      return { error: errorMessage };
+    }
+
     loading.value = true;
     error.value = null;
     const sitterId = selectedSitterId.value;
@@ -227,6 +263,83 @@ export const useSittersStore = defineStore('sitters', () => {
     }
   };
 
+  const applySitterChange = (eventType: string, nextRow: unknown, oldRow: unknown) => {
+    if (eventType === 'INSERT' || eventType === 'UPDATE') {
+      const row = asRow<Sitter>(nextRow);
+      if (row) {
+        sitters.value = upsertById(sitters.value, row);
+      }
+      return;
+    }
+
+    if (eventType === 'DELETE') {
+      const row = asRow<Sitter>(oldRow);
+      if (row) {
+        sitters.value = sitters.value.filter(sitter => sitter.id !== row.id);
+      }
+    }
+  };
+
+  const applySlotChange = (eventType: string, nextRow: unknown, oldRow: unknown) => {
+    if (eventType === 'INSERT' || eventType === 'UPDATE') {
+      const row = asRow<FeedingSlot>(nextRow);
+      if (row) {
+        slots.value = upsertById(slots.value, row);
+      }
+      return;
+    }
+
+    if (eventType === 'DELETE') {
+      const row = asRow<FeedingSlot>(oldRow);
+      if (row) {
+        slots.value = slots.value.filter(slot => slot.id !== row.id);
+      }
+    }
+  };
+
+  const onVisibility = () => {
+    if (document.visibilityState === 'visible') {
+      void fetchAll({ silent: true });
+    }
+  };
+
+  const startRealtime = () => {
+    if (!import.meta.client || realtimeChannel) {
+      return;
+    }
+
+    realtimeChannel = supabase
+      .channel('malta-calendar')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'sitters' },
+        (payload) => {
+          applySitterChange(payload.eventType, payload.new, payload.old);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'feeding_slots' },
+        (payload) => {
+          applySlotChange(payload.eventType, payload.new, payload.old);
+        }
+      )
+      .subscribe();
+
+    document.addEventListener('visibilitychange', onVisibility);
+  };
+
+  const stopRealtime = () => {
+    if (import.meta.client) {
+      document.removeEventListener('visibilitychange', onVisibility);
+    }
+
+    if (realtimeChannel) {
+      void supabase.removeChannel(realtimeChannel);
+      realtimeChannel = null;
+    }
+  };
+
   return {
     sitters,
     slots,
@@ -240,6 +353,8 @@ export const useSittersStore = defineStore('sitters', () => {
     fetchAll,
     createSitter,
     updateSelectedSitter,
-    toggleAvailability
+    toggleAvailability,
+    startRealtime,
+    stopRealtime
   };
 });
