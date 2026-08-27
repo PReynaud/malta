@@ -22,7 +22,17 @@ export const CARE_SECTIONS: CareSection[] = [
       },
       {
         type: 'image',
-        alt: 'Le distributeur de croquettes de Malta'
+        alt: 'Le distributeur automatique de croquettes de Malta',
+        src: '/care/food-feeder.jpg'
+      },
+      {
+        type: 'p',
+        text: 'Si le sac est vide, on rachète uniquement celui-là : Hill\'s Science Plan.'
+      },
+      {
+        type: 'image',
+        alt: 'Le sac de croquettes Hill\'s Science Plan',
+        src: '/care/food-kibble-bag.jpg'
       },
       {
         type: 'p',
@@ -31,6 +41,10 @@ export const CARE_SECTIONS: CareSection[] = [
       {
         type: 'p',
         text: 'Attention : mademoiselle est compliquée et n\'accepte que cette pâtée-ci. S\'il faut en racheter, c\'est uniquement celle-là, pas une autre. Si jamais elle ne la mange pas, il faudra jeter le reste à la poubelle. Dans ce cas, au bout de 2 ou 3 jours, on jette la poubelle pour éviter les vers. Le nécessaire pour changer est dans la cuisine.'
+      },
+      {
+        type: 'image',
+        alt: 'La pâtée de Malta'
       }
     ]
   },
