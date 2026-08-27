@@ -33,6 +33,8 @@ const FRENCH_WEEKDAYS = [
   'samedi'
 ] as const;
 
+export const PARIS_TZ = 'Europe/Paris';
+
 export const PRESET_COLORS = [
   '#FF1744',
   '#FF3D00',
@@ -173,6 +175,19 @@ export function sitterNeedDates(): string[] {
   return dates;
 }
 
+export function parisToday(now = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: PARIS_TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(now);
+}
+
+export function isFeedDateLocked(isoDate: string, today = parisToday()): boolean {
+  return isoDate < today;
+}
+
 export function isWeekend(isoDate: string): boolean {
   const weekday = new Date(`${isoDate}T00:00:00Z`).getUTCDay();
   return weekday === 0 || weekday === 6;
@@ -193,7 +208,8 @@ export function isLightHex(color: string): boolean {
 
 export function dayAriaLabel(
   isoDate: string,
-  sitterNames: string[]
+  sitterNames: string[],
+  locked = false
 ): string {
   const readable = formatDayLabel(isoDate);
 
@@ -207,6 +223,14 @@ export function dayAriaLabel(
 
   if (!needsSitter(isoDate)) {
     return readable;
+  }
+
+  if (locked) {
+    if (sitterNames.length === 0) {
+      return `${readable}, journée close, personne n'était prévu`;
+    }
+
+    return `${readable}, journée close, nourri par ${sitterNames.join(', ')}`;
   }
 
   if (sitterNames.length === 0) {

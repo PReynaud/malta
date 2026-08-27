@@ -8,10 +8,12 @@ import {
   dayEmoji,
   groupSlotsByDate,
   HAPPY_CAT_ISO,
+  isFeedDateLocked,
   isLightHex,
   isUncoveredDate,
   monthTitle,
   needsSitter,
+  parisToday,
   RETURN_ISO,
   SAD_CAT_ISO,
   toIsoDate
@@ -82,5 +84,16 @@ describe('calendar', () => {
     expect(dayAriaLabel('2026-09-04', ['Pierre'])).toBe(
       'vendredi 4 septembre 2026, nourri par Pierre'
     );
+    expect(dayAriaLabel('2026-09-04', ['Pierre'], true)).toBe(
+      'vendredi 4 septembre 2026, journée close, nourri par Pierre'
+    );
+  });
+
+  it('locks a feeding day after Paris midnight, not during the day', () => {
+    expect(isFeedDateLocked('2026-09-14', '2026-09-13')).toBe(false);
+    expect(isFeedDateLocked('2026-09-14', '2026-09-14')).toBe(false);
+    expect(isFeedDateLocked('2026-09-14', '2026-09-15')).toBe(true);
+    expect(parisToday(new Date('2026-09-14T21:59:00Z'))).toBe('2026-09-14');
+    expect(parisToday(new Date('2026-09-14T22:00:00Z'))).toBe('2026-09-15');
   });
 });

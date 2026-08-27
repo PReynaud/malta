@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useSittersStore } from '@/stores/sitters';
 import { useMaltaPhotosStore } from '@/stores/malta-photos';
 import { PATOUNE_PHOTO, scoreDeltaForToggle } from '@/utils/patounes';
@@ -12,9 +12,13 @@ const burstX = ref(0);
 const burstY = ref(0);
 const burstNonce = ref(0);
 
-onMounted(() => {
-  store.fetchAll();
-  photosStore.fetchAll();
+onMounted(async () => {
+  await Promise.all([store.fetchAll(), photosStore.fetchAll()]);
+  store.startRealtime();
+});
+
+onUnmounted(() => {
+  store.stopRealtime();
 });
 
 watch(

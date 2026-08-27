@@ -4,6 +4,7 @@ import {
   buildVacationGrid,
   dayAriaLabel,
   dayEmoji,
+  isFeedDateLocked,
   isLightHex,
   isOctoberOverflow,
   isUncoveredDate,
@@ -13,6 +14,7 @@ import {
   CALENDAR_YEAR,
   WEEKDAY_LABELS
 } from '@/utils/calendar';
+import { useParisToday } from '@/composables/use-paris-today';
 import type { Sitter } from '@/stores/sitters';
 
 const props = defineProps<{
@@ -28,6 +30,7 @@ const emit = defineEmits<{
 
 const title = monthTitle(CALENDAR_YEAR, CALENDAR_MONTH);
 const cells = buildVacationGrid();
+const today = useParisToday();
 const sitterById = computed(() => {
   const map: Record<string, Sitter> = {};
   for (const sitter of props.sitters) {
@@ -58,6 +61,10 @@ function isSelectedOnDate(isoDate: string): boolean {
   return (props.slotsByDate[isoDate] ?? []).includes(props.selectedSitterId);
 }
 
+function isLocked(isoDate: string): boolean {
+  return isFeedDateLocked(isoDate, today.value);
+}
+
 function sitterInitial(name: string): string {
   const trimmed = name.trim();
   return trimmed ? trimmed.charAt(0).toUpperCase() : '?';
@@ -72,9 +79,10 @@ function sitterInitial(name: string): string {
           {{ title }}
         </h2>
         <p class="text-sm text-muted">
-          <span class="sm:hidden">Tape un jour orange pour t'inscrire.</span>
+          <span class="sm:hidden">Tape un jour orange. Une fois le jour terminé, c'est clos.</span>
           <span class="hidden sm:inline">
             Les jours orange, Malta a besoin de toi. Tape pour t'ajouter ou te retirer.
+            Toute la journée, tu peux encore changer. À minuit passé (Paris), c'est clos.
           </span>
         </p>
       </div>
@@ -86,6 +94,10 @@ function sitterInitial(name: string): string {
         <span class="inline-flex items-center gap-1.5">
           <span class="size-3 rounded-sm bg-muted ring-1 ring-default" />
           Couvert
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span aria-hidden="true">🔒</span>
+          Clos
         </span>
       </div>
     </div>
@@ -112,18 +124,29 @@ function sitterInitial(name: string): string {
           class="flex min-h-[4.75rem] w-full flex-col rounded-xl border p-1 text-left transition touch-manipulation sm:min-h-32 sm:rounded-2xl sm:p-3"
           :class="[
             isUncoveredDate(cell.isoDate, slotsByDate)
-              ? 'border-secondary-400 bg-secondary-100 hover:bg-secondary-200 dark:bg-secondary-900/40 dark:hover:bg-secondary-900/70'
-              : 'border-default bg-elevated hover:border-highlighted',
+              ? 'border-secondary-400 bg-secondary-100 dark:bg-secondary-900/40'
+              : 'border-default bg-elevated',
+            isLocked(cell.isoDate)
+              ? 'cursor-not-allowed opacity-80'
+              : isUncoveredDate(cell.isoDate, slotsByDate)
+                ? 'hover:bg-secondary-200 dark:hover:bg-secondary-900/70'
+                : 'hover:border-highlighted',
             isSelectedOnDate(cell.isoDate) ? 'ring-2 ring-primary' : ''
           ]"
-          :aria-label="dayAriaLabel(cell.isoDate, namesForDate(cell.isoDate))"
-          :disabled="loading"
+          :aria-label="dayAriaLabel(cell.isoDate, namesForDate(cell.isoDate), isLocked(cell.isoDate))"
+          :disabled="loading || isLocked(cell.isoDate)"
           @click="emit('selectDate', cell.isoDate, $event)"
         >
           <span class="flex items-start justify-between gap-0.5">
             <span class="text-sm font-bold sm:text-xl">{{ cell.day }}</span>
             <span
-              v-if="isUncoveredDate(cell.isoDate, slotsByDate)"
+              v-if="isLocked(cell.isoDate)"
+              class="rounded-full bg-default px-1 py-px text-[9px] font-semibold uppercase tracking-wide text-muted ring-1 ring-default sm:px-2 sm:py-0.5 sm:text-xs"
+            >
+              Clos
+            </span>
+            <span
+              v-else-if="isUncoveredDate(cell.isoDate, slotsByDate)"
               class="rounded-full bg-secondary-500 px-1 py-px text-[9px] font-semibold uppercase tracking-wide text-white sm:px-2 sm:py-0.5 sm:text-xs"
             >
               Faim
