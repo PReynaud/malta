@@ -18,6 +18,7 @@ export const useMaltaPhotosStore = defineStore('maltaPhotos', () => {
 
   const photos = ref<MaltaPhoto[]>([]);
   const loading = ref(false);
+  const uploading = ref(false);
   const error = ref<string | null>(null);
 
   const photoCounts = computed(() => {
@@ -78,7 +79,7 @@ export const useMaltaPhotosStore = defineStore('maltaPhotos', () => {
       return { data: null, error: errorMessage };
     }
 
-    loading.value = true;
+    uploading.value = true;
     error.value = null;
     const storagePath = `${selectedSitterId}/${crypto.randomUUID()}.${extension}`;
 
@@ -110,7 +111,7 @@ export const useMaltaPhotosStore = defineStore('maltaPhotos', () => {
       error.value = errorMessage;
       return { data: null, error: errorMessage };
     } finally {
-      loading.value = false;
+      uploading.value = false;
     }
   };
 
@@ -121,6 +122,7 @@ export const useMaltaPhotosStore = defineStore('maltaPhotos', () => {
   return {
     photos,
     loading,
+    uploading,
     error,
     photoCounts,
     galleryItems,

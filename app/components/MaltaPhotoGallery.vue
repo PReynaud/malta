@@ -30,6 +30,12 @@ function rememberClick(event: MouseEvent) {
   lastClick.value = { x: event.clientX, y: event.clientY };
 }
 
+function onLabelClick(event: MouseEvent) {
+  if (props.loading) {
+    event.preventDefault();
+  }
+}
+
 function onFileChange(event: Event) {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
@@ -113,7 +119,11 @@ function photoAlt(photo: MaltaGalleryItem): string {
       Choisis d'abord qui tu es, puis envoie une photo.
     </p>
 
-    <label class="malta-cta mt-4 inline-flex w-full cursor-pointer touch-manipulation sm:w-auto">
+    <label
+      class="malta-cta mt-4 inline-flex w-full cursor-pointer touch-manipulation sm:w-auto"
+      :class="{ 'pointer-events-none opacity-45': loading }"
+      @click="onLabelClick"
+    >
       <input
         class="sr-only"
         type="file"

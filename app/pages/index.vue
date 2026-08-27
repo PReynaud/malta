@@ -120,7 +120,7 @@ async function onUploadPhoto(payload: { file: File; clientX: number; clientY: nu
         :photos="photosStore.galleryItems"
         :sitters="store.sitters"
         :selected-sitter-id="store.selectedSitterId"
-        :loading="photosStore.loading"
+        :loading="photosStore.uploading"
         :error="photosStore.error"
         @upload="onUploadPhoto"
       />
