@@ -89,9 +89,9 @@ describe('calendar', () => {
     );
   });
 
-  it('locks a feeding day once Paris midnight has been reached', () => {
+  it('locks a feeding day after Paris midnight, not during the day', () => {
     expect(isFeedDateLocked('2026-09-14', '2026-09-13')).toBe(false);
-    expect(isFeedDateLocked('2026-09-14', '2026-09-14')).toBe(true);
+    expect(isFeedDateLocked('2026-09-14', '2026-09-14')).toBe(false);
     expect(isFeedDateLocked('2026-09-14', '2026-09-15')).toBe(true);
     expect(parisToday(new Date('2026-09-14T21:59:00Z'))).toBe('2026-09-14');
     expect(parisToday(new Date('2026-09-14T22:00:00Z'))).toBe('2026-09-15');

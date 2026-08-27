@@ -215,7 +215,7 @@ export const useSittersStore = defineStore('sitters', () => {
     }
 
     if (isFeedDateLocked(isoDate)) {
-      const errorMessage = 'Ce jour est déjà commencé : plus d\'ajout ni de retrait.';
+      const errorMessage = 'Ce jour est déjà passé : plus d\'ajout ni de retrait.';
       error.value = errorMessage;
       return { error: errorMessage };
     }

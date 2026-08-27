@@ -185,7 +185,7 @@ export function parisToday(now = new Date()): string {
 }
 
 export function isFeedDateLocked(isoDate: string, today = parisToday()): boolean {
-  return isoDate <= today;
+  return isoDate < today;
 }
 
 export function isWeekend(isoDate: string): boolean {

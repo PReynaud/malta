@@ -1,20 +1,20 @@
--- Lock feeding-slot edits once the Paris calendar day has started.
+-- Lock feeding-slot edits after the Paris calendar day has ended.
 -- Broadcast sitters and slots to every open tab.
 
 drop policy if exists "Anyone can insert feeding slots" on public.feeding_slots;
 drop policy if exists "Anyone can delete feeding slots" on public.feeding_slots;
 
-create policy "Anyone can insert future feeding slots"
+create policy "Anyone can insert open feeding slots"
   on public.feeding_slots
   for insert
   to anon, authenticated
-  with check (feed_date > (timezone('Europe/Paris', now()))::date);
+  with check (feed_date >= (timezone('Europe/Paris', now()))::date);
 
-create policy "Anyone can delete future feeding slots"
+create policy "Anyone can delete open feeding slots"
   on public.feeding_slots
   for delete
   to anon, authenticated
-  using (feed_date > (timezone('Europe/Paris', now()))::date);
+  using (feed_date >= (timezone('Europe/Paris', now()))::date);
 
 alter table public.sitters replica identity full;
 alter table public.feeding_slots replica identity full;

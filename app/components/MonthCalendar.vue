@@ -79,10 +79,10 @@ function sitterInitial(name: string): string {
           {{ title }}
         </h2>
         <p class="text-sm text-muted">
-          <span class="sm:hidden">Tape un jour orange. Une fois le jour commencé, c'est clos.</span>
+          <span class="sm:hidden">Tape un jour orange. Une fois le jour terminé, c'est clos.</span>
           <span class="hidden sm:inline">
             Les jours orange, Malta a besoin de toi. Tape pour t'ajouter ou te retirer.
-            À minuit (Paris), le jour se verrouille.
+            Toute la journée, tu peux encore changer. À minuit passé (Paris), c'est clos.
           </span>
         </p>
       </div>
