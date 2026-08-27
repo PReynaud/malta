@@ -97,6 +97,13 @@ html.dark {
   animation-play-state: paused;
 }
 
+.malta-photo-marquee:not(.malta-photo-marquee-loop) .malta-photo-track {
+  animation: none;
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
 .malta-photo-track {
   gap: 0.75rem;
   animation-duration: 28s;

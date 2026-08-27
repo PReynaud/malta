@@ -10,8 +10,9 @@ test('a sitter can join, claim a hungry day, then leave it', async ({ page }, te
   await page.getByRole('button', { name: 'Rejoindre l\'équipe' }).click();
 
   await expect(page.getByText(`Tu es ${name}`)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ton profil' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Rejoindre l\'équipe' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Enregistrer' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Enregistrer' })).toBeHidden();
 
   const day = page.getByRole('button', { name: /^vendredi 4 septembre 2026,/ });
   await expect(day).toBeEnabled();
@@ -45,6 +46,7 @@ test('owner-covered days are not claimable, and the profile stays locked', async
   await page.getByRole('button', { name: 'Rejoindre l\'équipe' }).click();
   await expect(page.getByText(`Tu es ${name}`)).toBeVisible();
 
+  await page.getByRole('heading', { name: 'Ton profil' }).click();
   const renamed = `${name}-edit`;
   await page.getByPlaceholder('Tatie, voisin, cousin...').fill(renamed);
   await page.getByRole('button', { name: 'Enregistrer' }).click();
@@ -116,11 +118,12 @@ test('care instructions show food and water photos, with leftover placeholders',
   await expect(food.getByText('Image à venir')).toHaveCount(0);
   await expect(food.getByText(/pâtée/i).first()).toBeVisible();
 
-  await page.locator('summary', { hasText: 'Friandises' }).click();
-  const treats = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Friandises' }) });
-  await expect(treats.getByRole('img', { name: 'Le sachet de friandises Catisfactions à l\'herbe à chat' })).toHaveAttribute('src', '/care/treats-catisfactions.jpg');
-  await expect(treats.getByText(/Catisfactions/)).toBeVisible();
-  await expect(treats.getByText('Image à venir')).toHaveCount(0);
+  await expect(page.locator('summary', { hasText: 'Friandises' })).toHaveCount(0);
+  await page.locator('summary', { hasText: 'Jouets' }).click();
+  const toys = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Jouets' }) });
+  await expect(toys.getByRole('img', { name: 'Le sachet de friandises Catisfactions à l\'herbe à chat' })).toHaveAttribute('src', '/care/treats-catisfactions.jpg');
+  await expect(toys.getByText(/Catisfactions/)).toBeVisible();
+  await expect(toys.getByText(/bouchon de champagne/)).toBeVisible();
 
   await page.locator('summary', { hasText: 'Eau' }).click();
   const water = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Eau' }) });

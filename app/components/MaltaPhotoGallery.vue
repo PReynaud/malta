@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
+import { needsMarqueeLoop } from '@/utils/marquee';
 import { PATOUNE_PHOTO } from '@/utils/patounes';
 import type { MaltaGalleryItem } from '@/stores/malta-photos';
 import type { Sitter } from '@/stores/sitters';
@@ -7,7 +8,6 @@ import type { Sitter } from '@/stores/sitters';
 const props = defineProps<{
   photos: MaltaGalleryItem[];
   sitters: Sitter[];
-  selectedSitterId: string | null;
   loading: boolean;
   error: string | null;
 }>();
@@ -17,6 +17,46 @@ const emit = defineEmits<{
 }>();
 
 const lastClick = ref({ x: 0, y: 0 });
+const maskEl = ref<HTMLElement | null>(null);
+const contentEl = ref<HTMLElement | null>(null);
+const looping = ref(false);
+
+function updateLooping() {
+  const mask = maskEl.value;
+  const content = contentEl.value;
+  if (!import.meta.client || !mask || !content) {
+    looping.value = false;
+    return;
+  }
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  looping.value = needsMarqueeLoop(content.scrollWidth, mask.clientWidth, reduceMotion);
+}
+
+watch(
+  [maskEl, contentEl],
+  ([mask, content], _previous, onCleanup) => {
+    if (!import.meta.client || !mask || !content) {
+      looping.value = false;
+      return;
+    }
+
+    const observer = new ResizeObserver(() => updateLooping());
+    observer.observe(mask);
+    observer.observe(content);
+    updateLooping();
+
+    onCleanup(() => observer.disconnect());
+  }
+);
+
+watch(
+  () => props.photos.map(photo => photo.id).join(),
+  async () => {
+    await nextTick();
+    updateLooping();
+  }
+);
 
 const sitterById = computed(() => {
   const map: Record<string, Sitter> = {};
@@ -64,24 +104,32 @@ function photoAlt(photo: MaltaGalleryItem): string {
       Photos de Malta
     </h2>
     <p class="mt-1 text-sm text-muted">
-      +{{ PATOUNE_PHOTO }} patounes par photo. Choisis qui tu es, puis envoie un cliché du tigre.
+      +{{ PATOUNE_PHOTO }} patounes par photo.
     </p>
 
     <div
       v-if="photos.length"
+      ref="maskEl"
       class="malta-marquee-mask malta-photo-marquee mt-4 rounded-2xl border border-default bg-elevated py-3"
+      :class="{ 'malta-photo-marquee-loop': looping }"
+      data-testid="malta-photo-marquee"
     >
       <div class="malta-marquee-track malta-photo-track">
-        <div class="flex gap-3">
+        <div
+          ref="contentEl"
+          class="flex gap-3"
+        >
           <img
             v-for="photo in photos"
             :key="photo.id"
             :src="photo.publicUrl"
             :alt="photoAlt(photo)"
             class="malta-photo-frame"
+            @load="updateLooping"
           >
         </div>
         <div
+          v-if="looping"
           class="flex gap-3"
           aria-hidden="true"
         >
@@ -111,13 +159,6 @@ function photoAlt(photo: MaltaGalleryItem): string {
       data-testid="malta-photo-error"
       :title="error"
     />
-
-    <p
-      v-if="!selectedSitterId"
-      class="mt-4 text-sm text-muted"
-    >
-      Choisis d'abord qui tu es, puis envoie une photo.
-    </p>
 
     <label
       class="malta-cta mt-4 inline-flex w-full cursor-pointer touch-manipulation sm:w-auto"

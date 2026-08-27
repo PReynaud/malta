@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CARE_SECTIONS } from '@/data/care-guide';
+import { CARE_SECTIONS, groupCareBlocks } from '@/data/care-guide';
 </script>
 
 <template>
@@ -28,7 +28,7 @@ import { CARE_SECTIONS } from '@/data/care-guide';
 
         <div class="space-y-3 px-4 pb-4">
           <template
-            v-for="(block, index) in section.blocks"
+            v-for="(block, index) in groupCareBlocks(section.blocks)"
             :key="`${section.id}-${index}`"
           >
             <p
@@ -46,21 +46,34 @@ import { CARE_SECTIONS } from '@/data/care-guide';
             >
               {{ block.label }}
             </a>
-            <img
-              v-else-if="block.type === 'image' && block.src"
-              :src="block.src"
-              :alt="block.alt"
-              width="1536"
-              height="2048"
-              class="mx-auto h-auto max-h-96 w-auto max-w-full rounded-2xl object-contain"
-              loading="lazy"
-              decoding="async"
-            >
             <div
-              v-else-if="block.type === 'image'"
-              class="flex min-h-28 items-center justify-center rounded-2xl border-2 border-dashed border-malta-300 bg-malta-50 text-sm text-muted dark:border-malta-700 dark:bg-malta-900/40 sm:min-h-36"
+              v-else-if="block.type === 'images'"
+              class="grid gap-3"
+              :class="block.images.length > 1 ? 'grid-cols-1 min-[28rem]:grid-cols-2' : ''"
             >
-              Image à venir
+              <template
+                v-for="(image, imageIndex) in block.images"
+                :key="`${section.id}-image-${imageIndex}`"
+              >
+                <img
+                  v-if="image.src"
+                  :src="image.src"
+                  :alt="image.alt"
+                  width="1536"
+                  height="2048"
+                  :class="block.images.length > 1
+                    ? 'mx-auto h-auto max-h-80 w-full rounded-2xl object-contain'
+                    : 'mx-auto h-auto max-h-96 w-auto max-w-full rounded-2xl object-contain'"
+                  loading="lazy"
+                  decoding="async"
+                >
+                <div
+                  v-else
+                  class="flex min-h-28 items-center justify-center rounded-2xl border-2 border-dashed border-malta-300 bg-malta-50 text-sm text-muted dark:border-malta-700 dark:bg-malta-900/40 sm:min-h-36"
+                >
+                  Image à venir
+                </div>
+              </template>
             </div>
           </template>
         </div>
