@@ -82,7 +82,7 @@ function sitterInitial(name: string): string {
           <span class="sm:hidden">Tape un jour orange. Une fois le jour terminé, c'est clos.</span>
           <span class="hidden sm:inline">
             Les jours orange, Malta a besoin de toi. Tape pour t'ajouter ou te retirer.
-            Toute la journée, tu peux encore changer. À minuit passé (Paris), c'est clos.
+            À minuit passé (Paris), c'est clos.
           </span>
         </p>
       </div>

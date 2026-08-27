@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { CARE_SECTIONS, type CareBlock } from '../../app/data/care-guide';
+import { CARE_SECTIONS, groupCareBlocks, type CareBlock } from '../../app/data/care-guide';
 
 const imageBlocks = (sectionId: string): Extract<CareBlock, { type: 'image' }>[] => {
   const section = CARE_SECTIONS.find(entry => entry.id === sectionId);
@@ -13,7 +13,6 @@ describe('care guide', () => {
     expect(CARE_SECTIONS.map(section => section.id)).toEqual([
       'identify',
       'food',
-      'treats',
       'water',
       'litter',
       'pets',
@@ -29,16 +28,16 @@ describe('care guide', () => {
 
     expect(byId.food?.blocks.some(block => block.type === 'p' && block.text.includes('distributeur dans le couloir'))).toBe(true);
     expect(byId.food?.blocks.some(block => block.type === 'p' && block.text.includes('pâtée'))).toBe(true);
-    expect(byId.food?.blocks.some(block => block.type === 'p' && block.text.includes('Hill\'s Science Plan'))).toBe(true);
-    expect(byId.treats?.blocks.some(block => block.type === 'p' && block.text.includes('Catisfactions'))).toBe(true);
+    expect(byId.food?.blocks.some(block => block.type === 'image' && block.alt.includes('Hill\'s Science Plan'))).toBe(true);
     expect(byId.water?.blocks.some(block => block.type === 'p' && block.text.includes('ultraaaa'))).toBe(true);
     expect(byId.water?.blocks.some(block => block.type === 'p' && block.text.includes('gamelles à remplir'))).toBe(true);
     expect(byId.litter?.blocks.some(block => block.type === 'p' && block.text.includes('vide-ordures'))).toBe(true);
     expect(byId.pets?.blocks.some(block => block.type === 'p' && block.text.includes('barbe'))).toBe(true);
     expect(byId.toys?.blocks.some(block => block.type === 'p' && block.text.includes('bouchon de champagne'))).toBe(true);
+    expect(byId.toys?.blocks.some(block => block.type === 'p' && block.text.includes('Catisfactions'))).toBe(true);
     expect(byId.mess?.blocks.some(block => block.type === 'p' && block.text.includes('papier toilette'))).toBe(true);
     expect(byId.emergency?.blocks.some(block =>
-      block.type === 'p' && block.text.includes('pochette santé')
+      block.type === 'p' && block.text.includes('carnet de santé')
     )).toBe(true);
     expect(byId.emergency?.blocks.some(block =>
       block.type === 'link' && block.href === 'https://maps.app.goo.gl/dJxzphBvdmXNpLaH8'
@@ -86,6 +85,44 @@ describe('care guide', () => {
     ]);
   });
 
+  it('groups consecutive food photos into rows', () => {
+    const food = CARE_SECTIONS.find(section => section.id === 'food');
+    const imageGroups = groupCareBlocks(food?.blocks ?? []).filter(block => block.type === 'images');
+
+    expect(imageGroups).toEqual([
+      {
+        type: 'images',
+        images: [
+          {
+            type: 'image',
+            alt: 'Le distributeur automatique de croquettes de Malta',
+            src: '/care/food-feeder.jpg'
+          },
+          {
+            type: 'image',
+            alt: 'Le sac de croquettes Hill\'s Science Plan',
+            src: '/care/food-kibble-bag.jpg'
+          }
+        ]
+      },
+      {
+        type: 'images',
+        images: [
+          {
+            type: 'image',
+            alt: 'Malta qui attend sa pâtée',
+            src: '/care/food-pate-malta.jpg'
+          },
+          {
+            type: 'image',
+            alt: 'La pâtée de Malta dans son assiette',
+            src: '/care/food-pate-plate.jpg'
+          }
+        ]
+      }
+    ]);
+  });
+
   it('shows the automatic fountain and refill bowls in the water section', () => {
     expect(imageBlocks('water')).toEqual([
       {
@@ -121,8 +158,12 @@ describe('care guide', () => {
     ]);
   });
 
-  it('shows Catisfactions treats in the friandises section', () => {
-    expect(imageBlocks('treats')).toEqual([
+  it('shows Catisfactions treats in the jouets section', () => {
+    expect(imageBlocks('toys')).toEqual([
+      {
+        type: 'image',
+        alt: 'Les jouets de Malta'
+      },
       {
         type: 'image',
         alt: 'Le sachet de friandises Catisfactions à l\'herbe à chat',
@@ -142,7 +183,7 @@ describe('care guide', () => {
   });
 
   it('keeps photo placeholders in every other care section', () => {
-    for (const section of CARE_SECTIONS.filter(section => !['identify', 'water', 'food', 'emergency', 'litter', 'treats'].includes(section.id))) {
+    for (const section of CARE_SECTIONS.filter(section => !['identify', 'water', 'food', 'emergency', 'litter', 'toys'].includes(section.id))) {
       const photos = section.blocks.filter(block => block.type === 'image');
 
       expect(photos.length).toBeGreaterThan(0);

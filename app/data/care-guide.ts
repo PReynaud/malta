@@ -3,11 +3,38 @@ export type CareBlock
     | { type: 'image'; alt: string; src?: string }
     | { type: 'link'; href: string; label: string };
 
+export type CareImageBlock = Extract<CareBlock, { type: 'image' }>;
+
+export type CareDisplayBlock
+  = Exclude<CareBlock, { type: 'image' }>
+    | { type: 'images'; images: CareImageBlock[] };
+
 export interface CareSection {
   id: string;
   title: string;
   emoji: string;
   blocks: CareBlock[];
+}
+
+export function groupCareBlocks(blocks: CareBlock[]): CareDisplayBlock[] {
+  const grouped: CareDisplayBlock[] = [];
+
+  for (const block of blocks) {
+    if (block.type !== 'image') {
+      grouped.push(block);
+      continue;
+    }
+
+    const previous = grouped.at(-1);
+    if (previous?.type === 'images') {
+      previous.images.push(block);
+      continue;
+    }
+
+    grouped.push({ type: 'images', images: [block] });
+  }
+
+  return grouped;
 }
 
 export const CARE_SECTIONS: CareSection[] = [
@@ -46,10 +73,6 @@ export const CARE_SECTIONS: CareSection[] = [
         src: '/care/food-feeder.jpg'
       },
       {
-        type: 'p',
-        text: 'Si le sac est vide, on rachète uniquement celui-là : Hill\'s Science Plan.'
-      },
-      {
         type: 'image',
         alt: 'Le sac de croquettes Hill\'s Science Plan',
         src: '/care/food-kibble-bag.jpg'
@@ -68,29 +91,9 @@ export const CARE_SECTIONS: CareSection[] = [
         src: '/care/food-pate-malta.jpg'
       },
       {
-        type: 'p',
-        text: 'On la sert dans cette assiette-là.'
-      },
-      {
         type: 'image',
         alt: 'La pâtée de Malta dans son assiette',
         src: '/care/food-pate-plate.jpg'
-      }
-    ]
-  },
-  {
-    id: 'treats',
-    title: 'Friandises',
-    emoji: '🍬',
-    blocks: [
-      {
-        type: 'p',
-        text: 'Des Catisfactions à l\'herbe à chat. À donner de temps en temps, sans en abuser.'
-      },
-      {
-        type: 'image',
-        alt: 'Le sachet de friandises Catisfactions à l\'herbe à chat',
-        src: '/care/treats-catisfactions.jpg'
       }
     ]
   },
@@ -173,11 +176,20 @@ export const CARE_SECTIONS: CareSection[] = [
       },
       {
         type: 'p',
-        text: 'Si elle a la flemme, il faut insister un peu — mais pas trop : ce n\'est peut-être juste pas son moment.'
+        text: 'Si elle a la flemme, il faut insister un peu, mais pas trop : ce n\'est peut-être juste pas son moment.'
       },
       {
         type: 'image',
         alt: 'Les jouets de Malta'
+      },
+      {
+        type: 'p',
+        text: 'Des Catisfactions à l\'herbe à chat. À donner de temps en temps, sans en abuser.'
+      },
+      {
+        type: 'image',
+        alt: 'Le sachet de friandises Catisfactions à l\'herbe à chat',
+        src: '/care/treats-catisfactions.jpg'
       }
     ]
   },
@@ -211,7 +223,7 @@ export const CARE_SECTIONS: CareSection[] = [
       },
       {
         type: 'p',
-        text: 'Si besoin, le sac de transport est dans l\'entrée. La pochette santé est dans la poche sur le côté. L\'adresse de son vétérinaire habituel :'
+        text: 'Si besoin, le sac de transport est dans l\'entrée. Le carnet de santé est dans la poche sur le côté. L\'adresse de son vétérinaire habituel :'
       },
       {
         type: 'link',

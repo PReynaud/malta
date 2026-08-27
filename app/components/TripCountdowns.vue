@@ -95,7 +95,7 @@ onUnmounted(() => {
         Jusqu'au 1er octobre
       </h2>
       <p class="text-sm text-muted">
-        Le maître rentre. Malta redevient un pain de gruau.
+        Le maître rentre. Malta rebranche le ronron.
       </p>
       <p
         v-if="homecoming.done"

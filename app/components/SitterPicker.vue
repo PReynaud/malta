@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { PRESET_COLORS } from '@/utils/calendar';
 import type { Sitter } from '@/stores/sitters';
 
@@ -21,6 +21,7 @@ const color = ref<string>(PRESET_COLORS[0]);
 
 const locked = computed(() => Boolean(props.selectedSitter));
 const canSubmit = computed(() => name.value.trim().length > 0 && !props.loading);
+const detailsEl = ref<HTMLDetailsElement | null>(null);
 
 watch(
   () => props.selectedSitter,
@@ -32,6 +33,23 @@ watch(
   },
   { immediate: true }
 );
+
+watch(
+  locked,
+  () => {
+    void nextTick(() => {
+      if (detailsEl.value) {
+        detailsEl.value.open = !locked.value;
+      }
+    });
+  }
+);
+
+onMounted(() => {
+  if (detailsEl.value) {
+    detailsEl.value.open = !locked.value;
+  }
+});
 
 function submit() {
   if (!canSubmit.value) {
@@ -51,8 +69,8 @@ function submit() {
 <template>
   <section class="rounded-3xl border border-default bg-default/80 shadow-sm">
     <details
+      ref="detailsEl"
       class="group"
-      open
     >
       <summary class="flex cursor-pointer list-none items-center gap-3 p-4 touch-manipulation [&::-webkit-details-marker]:hidden sm:p-6">
         <div class="min-w-0 flex-1">

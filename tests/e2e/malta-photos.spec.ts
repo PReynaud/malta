@@ -22,7 +22,8 @@ test('a selected sitter can upload a Malta photo and gain two patounes', async (
 
   await page.getByTestId('malta-photo-input').setInputFiles(maltaPhotoPath);
   await expect(page.getByTestId('cat-mood-burst')).toContainText('+2');
-  await expect(page.getByRole('img', { name: `Photo de Malta par ${name}` }).first()).toBeVisible();
+  await expect(page.getByRole('img', { name: `Photo de Malta par ${name}` })).toBeVisible();
+  await expect(page.locator('[data-testid="malta-photo-marquee"] img')).toHaveCount(1);
 
   const row = page.getByRole('listitem').filter({ hasText: name });
   await expect(row.getByText('2 patounes', { exact: true })).toBeVisible();
