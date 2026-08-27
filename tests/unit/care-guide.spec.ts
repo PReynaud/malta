@@ -11,6 +11,7 @@ const imageBlocks = (sectionId: string): Extract<CareBlock, { type: 'image' }>[]
 describe('care guide', () => {
   it('covers every care topic with real copy and a photo slot', () => {
     expect(CARE_SECTIONS.map(section => section.id)).toEqual([
+      'identify',
       'food',
       'treats',
       'water',
@@ -22,6 +23,9 @@ describe('care guide', () => {
     ]);
 
     const byId = Object.fromEntries(CARE_SECTIONS.map(section => [section.id, section]));
+
+    expect(byId.identify?.blocks.some(block => block.type === 'p' && block.text.includes('blanc et gris'))).toBe(true);
+    expect(byId.identify?.blocks.some(block => block.type === 'p' && block.text.includes('Appelez la police'))).toBe(true);
 
     expect(byId.food?.blocks.some(block => block.type === 'p' && block.text.includes('distributeur dans le couloir'))).toBe(true);
     expect(byId.food?.blocks.some(block => block.type === 'p' && block.text.includes('pâtée'))).toBe(true);
@@ -127,8 +131,18 @@ describe('care guide', () => {
     ]);
   });
 
+  it('shows Malta in the identify section', () => {
+    expect(imageBlocks('identify')).toEqual([
+      {
+        type: 'image',
+        alt: 'Malta, le chat blanc et gris',
+        src: '/care/identify-malta.jpg'
+      }
+    ]);
+  });
+
   it('keeps photo placeholders in every other care section', () => {
-    for (const section of CARE_SECTIONS.filter(section => !['water', 'food', 'emergency', 'litter', 'treats'].includes(section.id))) {
+    for (const section of CARE_SECTIONS.filter(section => !['identify', 'water', 'food', 'emergency', 'litter', 'treats'].includes(section.id))) {
       const photos = section.blocks.filter(block => block.type === 'image');
 
       expect(photos.length).toBeGreaterThan(0);

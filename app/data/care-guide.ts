@@ -12,6 +12,26 @@ export interface CareSection {
 
 export const CARE_SECTIONS: CareSection[] = [
   {
+    id: 'identify',
+    title: 'Savoir identifier le chat',
+    emoji: '🔎',
+    blocks: [
+      {
+        type: 'p',
+        text: 'Normalement, il ne devrait pas y avoir trop de surprises, le chat est blanc et gris. Parfois il se cache un peu au début, il faut donc l\'amadouer.'
+      },
+      {
+        type: 'image',
+        alt: 'Malta, le chat blanc et gris',
+        src: '/care/identify-malta.jpg'
+      },
+      {
+        type: 'p',
+        text: 'Si le chat n\'est pas blanc et gris... Appelez la police.'
+      }
+    ]
+  },
+  {
     id: 'food',
     title: 'Nourriture',
     emoji: '🍽️',

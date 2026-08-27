@@ -99,6 +99,13 @@ test('care instructions show food and water photos, with leftover placeholders',
   await expect(page.getByRole('heading', { name: 'Instructions' })).toBeVisible();
   await expect(page.getByText('Image à venir').first()).toBeHidden();
 
+  await page.locator('summary', { hasText: 'Savoir identifier le chat' }).click();
+  const identify = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Savoir identifier le chat' }) });
+  await expect(identify.getByText(/le chat est blanc et gris/)).toBeVisible();
+  await expect(identify.getByRole('img', { name: 'Malta, le chat blanc et gris' })).toHaveAttribute('src', '/care/identify-malta.jpg');
+  await expect(identify.getByText(/Appelez la police/)).toBeVisible();
+  await expect(identify.getByText('Image à venir')).toHaveCount(0);
+
   await page.locator('summary', { hasText: 'Nourriture' }).click();
   const food = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Nourriture' }) });
   await expect(food.getByText(/distributeur dans le couloir/)).toBeVisible();
