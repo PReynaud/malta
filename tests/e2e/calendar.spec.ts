@@ -92,21 +92,58 @@ test('the blinking patoune banner can be dismissed', async ({ page }) => {
   await expect(banner).toBeVisible();
 });
 
-test('care instructions expand a placeholder section', async ({ page }) => {
+test('care instructions show food and water photos, with leftover placeholders', async ({ page }) => {
   await page.goto('/');
   await waitForNuxtHydration(page);
 
   await expect(page.getByRole('heading', { name: 'Instructions' })).toBeVisible();
   await expect(page.getByText('Image à venir').first()).toBeHidden();
 
+  await page.locator('summary', { hasText: 'Savoir identifier le chat' }).click();
+  const identify = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Savoir identifier le chat' }) });
+  await expect(identify.getByText(/le chat est blanc et gris/)).toBeVisible();
+  await expect(identify.getByRole('img', { name: 'Malta, le chat blanc et gris' })).toHaveAttribute('src', '/care/identify-malta.jpg');
+  await expect(identify.getByText(/Appelez la police/)).toBeVisible();
+  await expect(identify.getByText('Image à venir')).toHaveCount(0);
+
   await page.locator('summary', { hasText: 'Nourriture' }).click();
-  await expect(page.getByText(/distributeur dans le couloir/)).toBeVisible();
-  await expect(page.getByText('Image à venir').first()).toBeVisible();
-  await expect(page.getByText(/pâtée/i).first()).toBeVisible();
+  const food = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Nourriture' }) });
+  await expect(food.getByText(/distributeur dans le couloir/)).toBeVisible();
+  await expect(food.getByRole('img', { name: 'Le distributeur automatique de croquettes de Malta' })).toHaveAttribute('src', '/care/food-feeder.jpg');
+  await expect(food.getByRole('img', { name: 'Le sac de croquettes Hill\'s Science Plan' })).toHaveAttribute('src', '/care/food-kibble-bag.jpg');
+  await expect(food.getByRole('img', { name: 'Malta qui attend sa pâtée' })).toHaveAttribute('src', '/care/food-pate-malta.jpg');
+  await expect(food.getByRole('img', { name: 'La pâtée de Malta dans son assiette' })).toHaveAttribute('src', '/care/food-pate-plate.jpg');
+  await expect(food.getByText('Image à venir')).toHaveCount(0);
+  await expect(food.getByText(/pâtée/i).first()).toBeVisible();
+
+  await page.locator('summary', { hasText: 'Friandises' }).click();
+  const treats = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Friandises' }) });
+  await expect(treats.getByRole('img', { name: 'Le sachet de friandises Catisfactions à l\'herbe à chat' })).toHaveAttribute('src', '/care/treats-catisfactions.jpg');
+  await expect(treats.getByText(/Catisfactions/)).toBeVisible();
+  await expect(treats.getByText('Image à venir')).toHaveCount(0);
+
+  await page.locator('summary', { hasText: 'Eau' }).click();
+  const water = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Eau' }) });
+  const fountain = water.getByRole('img', { name: 'La fontaine à eau automatique de Malta' });
+  const bowl = water.getByRole('img', { name: 'Une gamelle à remplir de temps en temps' });
+  await expect(fountain).toBeVisible();
+  await expect(bowl).toBeVisible();
+  await expect(fountain).toHaveAttribute('src', '/care/water-fountain.jpg');
+  await expect(bowl).toHaveAttribute('src', '/care/water-bowl.jpg');
+  await expect(water.getByText(/gamelles à remplir/)).toBeVisible();
+  await expect(water.getByText('Image à venir')).toHaveCount(0);
+
+  await page.locator('summary', { hasText: 'Litières' }).click();
+  const litter = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Litières' }) });
+  await expect(litter.getByRole('img', { name: 'Une des litières de Malta, avec la pelle sur le couvercle' })).toHaveAttribute('src', '/care/litter-box.jpg');
+  await expect(litter.getByText('Image à venir')).toHaveCount(0);
 
   await page.locator('summary', { hasText: 'Saletés' }).click();
   await expect(page.getByText(/papier toilette/)).toBeVisible();
 
   await page.locator('summary', { hasText: 'Urgences' }).click();
-  await expect(page.getByRole('link', { name: /Vétérinaire de Malta/ })).toBeVisible();
+  const emergency = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Urgences' }) });
+  await expect(emergency.getByRole('link', { name: /Vétérinaire de Malta/ })).toBeVisible();
+  await expect(emergency.getByRole('img', { name: 'Le sac de transport de Malta' })).toHaveAttribute('src', '/care/emergency-carrier.jpg');
+  await expect(emergency.getByText('Image à venir')).toHaveCount(0);
 });

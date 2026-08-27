@@ -1,6 +1,6 @@
 export type CareBlock
   = { type: 'p'; text: string }
-    | { type: 'image'; alt: string }
+    | { type: 'image'; alt: string; src?: string }
     | { type: 'link'; href: string; label: string };
 
 export interface CareSection {
@@ -12,6 +12,26 @@ export interface CareSection {
 
 export const CARE_SECTIONS: CareSection[] = [
   {
+    id: 'identify',
+    title: 'Savoir identifier le chat',
+    emoji: '🔎',
+    blocks: [
+      {
+        type: 'p',
+        text: 'Normalement, il ne devrait pas y avoir trop de surprises, le chat est blanc et gris. Parfois il se cache un peu au début, il faut donc l\'amadouer.'
+      },
+      {
+        type: 'image',
+        alt: 'Malta, le chat blanc et gris',
+        src: '/care/identify-malta.jpg'
+      },
+      {
+        type: 'p',
+        text: 'Si le chat n\'est pas blanc et gris... Appelez la police.'
+      }
+    ]
+  },
+  {
     id: 'food',
     title: 'Nourriture',
     emoji: '🍽️',
@@ -22,7 +42,17 @@ export const CARE_SECTIONS: CareSection[] = [
       },
       {
         type: 'image',
-        alt: 'Le distributeur de croquettes de Malta'
+        alt: 'Le distributeur automatique de croquettes de Malta',
+        src: '/care/food-feeder.jpg'
+      },
+      {
+        type: 'p',
+        text: 'Si le sac est vide, on rachète uniquement celui-là : Hill\'s Science Plan.'
+      },
+      {
+        type: 'image',
+        alt: 'Le sac de croquettes Hill\'s Science Plan',
+        src: '/care/food-kibble-bag.jpg'
       },
       {
         type: 'p',
@@ -31,6 +61,36 @@ export const CARE_SECTIONS: CareSection[] = [
       {
         type: 'p',
         text: 'Attention : mademoiselle est compliquée et n\'accepte que cette pâtée-ci. S\'il faut en racheter, c\'est uniquement celle-là, pas une autre. Si jamais elle ne la mange pas, il faudra jeter le reste à la poubelle. Dans ce cas, au bout de 2 ou 3 jours, on jette la poubelle pour éviter les vers. Le nécessaire pour changer est dans la cuisine.'
+      },
+      {
+        type: 'image',
+        alt: 'Malta qui attend sa pâtée',
+        src: '/care/food-pate-malta.jpg'
+      },
+      {
+        type: 'p',
+        text: 'On la sert dans cette assiette-là.'
+      },
+      {
+        type: 'image',
+        alt: 'La pâtée de Malta dans son assiette',
+        src: '/care/food-pate-plate.jpg'
+      }
+    ]
+  },
+  {
+    id: 'treats',
+    title: 'Friandises',
+    emoji: '🍬',
+    blocks: [
+      {
+        type: 'p',
+        text: 'Des Catisfactions à l\'herbe à chat. À donner de temps en temps, sans en abuser.'
+      },
+      {
+        type: 'image',
+        alt: 'Le sachet de friandises Catisfactions à l\'herbe à chat',
+        src: '/care/treats-catisfactions.jpg'
       }
     ]
   },
@@ -44,12 +104,22 @@ export const CARE_SECTIONS: CareSection[] = [
         text: 'C\'est automatique ! Mais attention : au bout de 10 jours, il faudra remettre un peu d\'eau. Le mécanisme est ultraaaa sensible, mieux vaut récupérer un verre et remplir tout doucement.'
       },
       {
+        type: 'image',
+        alt: 'La fontaine à eau automatique de Malta',
+        src: '/care/water-fountain.jpg'
+      },
+      {
         type: 'p',
         text: 'Si jamais la fontaine ne fonctionne plus, il faut la nettoyer un peu. Pour la remettre en marche, les connecteurs doivent être très secs… et il faut souvent s\'y reprendre à plusieurs fois. Appelez-moi si besoin.'
       },
       {
+        type: 'p',
+        text: 'Il y a aussi des gamelles à remplir de temps en temps, comme celle-ci, en plus de la fontaine automatique.'
+      },
+      {
         type: 'image',
-        alt: 'La fontaine à eau de Malta'
+        alt: 'Une gamelle à remplir de temps en temps',
+        src: '/care/water-bowl.jpg'
       }
     ]
   },
@@ -63,12 +133,13 @@ export const CARE_SECTIONS: CareSection[] = [
         text: 'Toutes les semaines, il serait bien de nettoyer un peu les litières 💩. C\'est facile : un petit sac plastique blanc, la pelle, et on ramasse. Une fois les 3 litières nettoyées, le sac peut être jeté.'
       },
       {
-        type: 'p',
-        text: 'Il y a un vide-ordures sur le palier, pas besoin de descendre. En face de l\'appart, c\'est la porte à gauche (en face des portes des deux autres voisins).'
+        type: 'image',
+        alt: 'Une des litières de Malta, avec la pelle sur le couvercle',
+        src: '/care/litter-box.jpg'
       },
       {
-        type: 'image',
-        alt: 'Les litières de Malta'
+        type: 'p',
+        text: 'Il y a un vide-ordures sur le palier, pas besoin de descendre. En face de l\'appart, c\'est la porte à gauche (en face des portes des deux autres voisins).'
       }
     ]
   },
@@ -140,7 +211,7 @@ export const CARE_SECTIONS: CareSection[] = [
       },
       {
         type: 'p',
-        text: 'Si besoin, le sac de transport est dans l\'entrée, avec son carnet de santé dedans. L\'adresse de son vétérinaire habituel :'
+        text: 'Si besoin, le sac de transport est dans l\'entrée. La pochette santé est dans la poche sur le côté. L\'adresse de son vétérinaire habituel :'
       },
       {
         type: 'link',
@@ -149,7 +220,8 @@ export const CARE_SECTIONS: CareSection[] = [
       },
       {
         type: 'image',
-        alt: 'Le sac de transport de Malta'
+        alt: 'Le sac de transport de Malta',
+        src: '/care/emergency-carrier.jpg'
       }
     ]
   }

@@ -12,6 +12,13 @@
 - Care instructions filled in (food, water, litter, pets, toys, mess, emergencies).
 - Calendar updates live across devices; a feeding day locks after Paris midnight.
 - Selected sitters can upload Malta photos for +2 patounes; a scrolling gallery sits under the leaderboard.
+- Water care photos: automatic fountain and refill bowls; other instruction photos stay placeholders.
+- Food kibble photos: automatic feeder and Hill's Science Plan bag; pâté photo still a placeholder.
+- Food pâté photos: Malta waiting, then the wet food on her plate.
+- Emergency carrier photo, with the health pouch in the side pocket.
+- Litter box photo, with the scoop on the lid.
+- Treats section: Catisfactions catnip pouch.
+- Identify-the-cat section first: grey-and-white Malta, call the police otherwise.
 
 - September feeding calendar: pick a sitter by name and color, claim or leave a day, highlight empty bowls.
 - Warm grey-and-white Malta theme (no login on the public calendar).
