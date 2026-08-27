@@ -24,6 +24,7 @@ export interface PatouneScore {
   weekendDays: number;
   streakBonus: number;
   photos: number;
+  bonus: number;
   total: number;
 }
 
@@ -67,7 +68,8 @@ export function streakBonusForDates(isoDates: string[]): number {
 export function scoreSitter(
   sitterId: string,
   slotsByDate: Record<string, string[]>,
-  photoCount = 0
+  photoCount = 0,
+  bonusPatounes = 0
 ): PatouneScore {
   const days: string[] = [];
   let soloDays = 0;
@@ -91,13 +93,15 @@ export function scoreSitter(
   }
 
   const photos = Math.max(0, photoCount);
+  const bonus = Math.max(0, bonusPatounes);
   const streakBonus = streakBonusForDates(days);
   const total
     = days.length * PATOUNE_BASE
       + soloDays * PATOUNE_SOLO
       + weekendDays * PATOUNE_WEEKEND
       + streakBonus
-      + photos * PATOUNE_PHOTO;
+      + photos * PATOUNE_PHOTO
+      + bonus;
 
   return {
     sitterId,
@@ -106,6 +110,7 @@ export function scoreSitter(
     weekendDays,
     streakBonus,
     photos,
+    bonus,
     total
   };
 }
@@ -114,9 +119,12 @@ export function rankSitters(
   sitterIds: string[],
   slotsByDate: Record<string, string[]>,
   namesById: Record<string, string> = {},
-  photoCounts: Record<string, number> = {}
+  photoCounts: Record<string, number> = {},
+  bonusCounts: Record<string, number> = {}
 ): RankedPatoune[] {
-  const scored = sitterIds.map(id => scoreSitter(id, slotsByDate, photoCounts[id] ?? 0));
+  const scored = sitterIds.map(id =>
+    scoreSitter(id, slotsByDate, photoCounts[id] ?? 0, bonusCounts[id] ?? 0)
+  );
 
   scored.sort((left, right) => {
     if (right.total !== left.total) {

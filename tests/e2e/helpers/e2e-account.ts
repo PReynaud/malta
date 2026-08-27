@@ -1,3 +1,4 @@
+import { ADMIN_EMAIL } from '../../../app/utils/admin';
 import { assertLocalSupabaseUrl, LOCAL_SUPABASE_SERVICE_ROLE_KEY, LOCAL_SUPABASE_URL } from '../local-supabase';
 
 export interface E2EAccount {
@@ -55,6 +56,84 @@ export const createE2EAccountForTest = async (seed: string): Promise<E2EAccount>
   return {
     userId: payload.id,
     email: payload.email || generated.email,
+    password: generated.password
+  };
+};
+
+const listAuthUsers = async (): Promise<Array<{ id: string; email?: string }>> => {
+  const { supabaseUrl, serviceRoleKey } = adminHeaders();
+  const response = await fetch(`${supabaseUrl}/auth/v1/admin/users?page=1&per_page=1000`, {
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to list auth users: ${await response.text()}`);
+  }
+
+  const payload = await response.json() as { users?: Array<{ id: string; email?: string }> };
+  return payload.users ?? [];
+};
+
+export const ensureAdminE2EAccount = async (): Promise<E2EAccount> => {
+  const { supabaseUrl, serviceRoleKey } = adminHeaders();
+  const generated = generateE2EAccountData('malta-admin');
+
+  const createResponse = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
+    method: 'POST',
+    headers: {
+      'apikey': serviceRoleKey,
+      'Authorization': `Bearer ${serviceRoleKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      email: ADMIN_EMAIL,
+      password: generated.password,
+      email_confirm: true,
+      app_metadata: { role: 'admin', provider: 'email', providers: ['email'] }
+    })
+  });
+
+  if (createResponse.ok) {
+    const payload = await createResponse.json() as { id: string; email?: string };
+    return {
+      userId: payload.id,
+      email: payload.email || ADMIN_EMAIL,
+      password: generated.password
+    };
+  }
+
+  const existing = (await listAuthUsers()).find(
+    user => user.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+  );
+
+  if (!existing) {
+    throw new Error(`Failed to create admin E2E account: ${await createResponse.text()}`);
+  }
+
+  const updateResponse = await fetch(`${supabaseUrl}/auth/v1/admin/users/${existing.id}`, {
+    method: 'PUT',
+    headers: {
+      'apikey': serviceRoleKey,
+      'Authorization': `Bearer ${serviceRoleKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      password: generated.password,
+      email_confirm: true,
+      app_metadata: { role: 'admin', provider: 'email', providers: ['email'] }
+    })
+  });
+
+  if (!updateResponse.ok) {
+    throw new Error(`Failed to update admin E2E account: ${await updateResponse.text()}`);
+  }
+
+  return {
+    userId: existing.id,
+    email: ADMIN_EMAIL,
     password: generated.password
   };
 };

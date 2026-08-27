@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Private `/admin` back office (email login, no signup) to delete photos, delete sitters, and add or remove bonus patounes.
+
 - French UI, flashy sitter colors, locked profile with name/color edit.
 - Vacation coverage: 4–5 and 14–30 September 2026; other days show the owner is a good owner.
 - Mobile-friendly calendar and header.

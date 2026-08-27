@@ -1,1 +1,4 @@
--- Reference data only. User accounts are created per Playwright test.
+-- Reference data only. Do not seed auth passwords.
+-- Create pierre.reynaud@outlook.com in local Studio if you need to log into /admin,
+-- then grant app_metadata.role = admin (the admin migration stamps that if the user exists).
+-- Other user accounts are created per Playwright test.

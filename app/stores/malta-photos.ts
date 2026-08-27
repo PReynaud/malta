@@ -119,6 +119,43 @@ export const useMaltaPhotosStore = defineStore('maltaPhotos', () => {
     error.value = null;
   };
 
+  const deletePhoto = async (photoId: string) => {
+    const photo = photos.value.find(item => item.id === photoId);
+    if (!photo) {
+      const errorMessage = 'Photo introuvable.';
+      error.value = errorMessage;
+      return { error: errorMessage };
+    }
+
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const { error: deleteError } = await supabase
+        .from('malta_photos')
+        .delete()
+        .eq('id', photoId);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      const { error: storageError } = await supabase.storage.from(BUCKET).remove([photo.storage_path]);
+      if (storageError) {
+        throw storageError;
+      }
+
+      photos.value = photos.value.filter(item => item.id !== photoId);
+      return { error: null };
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err, 'Impossible de supprimer la photo');
+      error.value = errorMessage;
+      return { error: errorMessage };
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     photos,
     loading,
@@ -128,6 +165,7 @@ export const useMaltaPhotosStore = defineStore('maltaPhotos', () => {
     galleryItems,
     fetchAll,
     uploadPhoto,
+    deletePhoto,
     clearError
   };
 });

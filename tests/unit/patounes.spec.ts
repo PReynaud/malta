@@ -120,4 +120,27 @@ describe('patounes', () => {
     expect(ranked[1]?.total).toBe(2);
     expect(ranked[1]?.photos).toBe(1);
   });
+
+  it('adds stored bonus patounes on top of earned points', () => {
+    const score = scoreSitter('a', { '2026-09-04': ['a'] }, 1, 5);
+    expect(score).toMatchObject({
+      days: 1,
+      photos: 1,
+      bonus: 5,
+      total: 20 + 2 + 5
+    });
+
+    const ranked = rankSitters(
+      ['bonus', 'feeder'],
+      { '2026-09-04': ['feeder'] },
+      { bonus: 'Bonus', feeder: 'Nounou' },
+      { bonus: 0, feeder: 0 },
+      { bonus: 21, feeder: 0 }
+    );
+
+    expect(ranked[0]?.sitterId).toBe('bonus');
+    expect(ranked[0]?.total).toBe(21);
+    expect(ranked[1]?.sitterId).toBe('feeder');
+    expect(ranked[1]?.total).toBe(20);
+  });
 });
