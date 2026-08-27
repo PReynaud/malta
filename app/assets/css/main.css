@@ -93,6 +93,25 @@ html.dark {
   animation: malta-marquee 16s linear infinite;
 }
 
+.malta-photo-marquee:hover .malta-photo-track {
+  animation-play-state: paused;
+}
+
+.malta-photo-track {
+  gap: 0.75rem;
+  animation-duration: 28s;
+}
+
+.malta-photo-frame {
+  height: 8rem;
+  width: auto;
+  max-width: 12rem;
+  flex-shrink: 0;
+  border-radius: 1rem;
+  object-fit: cover;
+  background: #edece8;
+}
+
 .malta-mood-burst {
   animation: malta-mood-pop 0.9s ease-out forwards;
 }

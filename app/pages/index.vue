@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useSittersStore } from '@/stores/sitters';
-import { scoreDeltaForToggle } from '@/utils/patounes';
+import { useMaltaPhotosStore } from '@/stores/malta-photos';
+import { PATOUNE_PHOTO, scoreDeltaForToggle } from '@/utils/patounes';
 
 const store = useSittersStore();
+const photosStore = useMaltaPhotosStore();
 const burstMood = ref<'happy' | 'sad' | null>(null);
 const burstDelta = ref(0);
 const burstX = ref(0);
@@ -11,13 +13,22 @@ const burstY = ref(0);
 const burstNonce = ref(0);
 
 onMounted(async () => {
-  await store.fetchAll();
+  await Promise.all([store.fetchAll(), photosStore.fetchAll()]);
   store.startRealtime();
 });
 
 onUnmounted(() => {
   store.stopRealtime();
 });
+
+watch(
+  () => store.selectedSitterId,
+  (sitterId) => {
+    if (sitterId) {
+      photosStore.clearError();
+    }
+  }
+);
 
 async function onSelectDate(isoDate: string, event: MouseEvent) {
   const selected = store.selectedSitterId;
@@ -38,6 +49,20 @@ async function onSelectDate(isoDate: string, event: MouseEvent) {
   burstDelta.value = delta;
   burstX.value = event.clientX;
   burstY.value = event.clientY;
+  burstNonce.value += 1;
+}
+
+async function onUploadPhoto(payload: { file: File; clientX: number; clientY: number }) {
+  const { error } = await photosStore.uploadPhoto(payload.file, store.selectedSitterId);
+
+  if (error) {
+    return;
+  }
+
+  burstMood.value = 'happy';
+  burstDelta.value = PATOUNE_PHOTO;
+  burstX.value = payload.clientX;
+  burstY.value = payload.clientY;
   burstNonce.value += 1;
 }
 </script>
@@ -92,6 +117,16 @@ async function onSelectDate(isoDate: string, event: MouseEvent) {
         :sitters="store.sitters"
         :slots-by-date="store.slotsByDate"
         :selected-sitter-id="store.selectedSitterId"
+        :photo-counts="photosStore.photoCounts"
+      />
+
+      <MaltaPhotoGallery
+        :photos="photosStore.galleryItems"
+        :sitters="store.sitters"
+        :selected-sitter-id="store.selectedSitterId"
+        :loading="photosStore.uploading"
+        :error="photosStore.error"
+        @upload="onUploadPhoto"
       />
 
       <CareGuide />

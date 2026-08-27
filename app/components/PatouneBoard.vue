@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import {
   patouneLabel,
   PATOUNE_BASE,
+  PATOUNE_PHOTO,
   PATOUNE_SOLO,
   PATOUNE_STREAK,
   PATOUNE_WEEKEND,
@@ -15,6 +16,7 @@ const props = defineProps<{
   sitters: Sitter[];
   slotsByDate: Record<string, string[]>;
   selectedSitterId: string | null;
+  photoCounts?: Record<string, number>;
 }>();
 
 const ranked = computed(() => {
@@ -26,7 +28,8 @@ const ranked = computed(() => {
   return rankSitters(
     props.sitters.map(sitter => sitter.id),
     props.slotsByDate,
-    names
+    names,
+    props.photoCounts ?? {}
   );
 });
 
@@ -48,7 +51,8 @@ const sitterById = computed(() => {
       {{ PATOUNE_BASE }} par jour,
       +{{ PATOUNE_SOLO }} si tu es seul·e (sauvetage),
       +{{ PATOUNE_WEEKEND }} le week-end,
-      +{{ PATOUNE_STREAK }} par jour d'affilée.
+      +{{ PATOUNE_STREAK }} par jour d'affilée,
+      +{{ PATOUNE_PHOTO }} par photo de Malta.
       Tu te retires, tu perds les patounes.
     </p>
 

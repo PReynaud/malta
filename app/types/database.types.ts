@@ -38,6 +38,35 @@ export type Database = {
           },
         ]
       }
+      malta_photos: {
+        Row: {
+          created_at: string
+          id: string
+          sitter_id: string
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          sitter_id: string
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          sitter_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "malta_photos_sitter_id_fkey"
+            columns: ["sitter_id"]
+            isOneToOne: false
+            referencedRelation: "sitters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

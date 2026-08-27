@@ -4,6 +4,7 @@ import {
   coverageMeter,
   formatPatouneDelta,
   patouneLabel,
+  PATOUNE_PHOTO,
   PATOUNE_TITLES,
   rankSitters,
   scoreDeltaForToggle,
@@ -90,5 +91,33 @@ describe('patounes', () => {
     expect(scoreDeltaForToggle('a', '2026-09-04', { '2026-09-04': ['a'] }, false)).toBe(-20);
     expect(formatPatouneDelta(20)).toBe('+20');
     expect(formatPatouneDelta(-20)).toBe('-20');
+  });
+
+  it('adds two patounes per Malta photo without changing day math', () => {
+    expect(PATOUNE_PHOTO).toBe(2);
+
+    const score = scoreSitter('a', {}, 3);
+    expect(score).toMatchObject({
+      days: 0,
+      photos: 3,
+      total: 6
+    });
+
+    expect(scoreDeltaForToggle('a', '2026-09-04', {}, true)).toBe(20);
+  });
+
+  it('ranks a feeding-day rescue above a single photo', () => {
+    const ranked = rankSitters(
+      ['photo', 'feeder'],
+      { '2026-09-04': ['feeder'] },
+      { photo: 'Paparazzi', feeder: 'Nounou' },
+      { photo: 1, feeder: 0 }
+    );
+
+    expect(ranked[0]?.sitterId).toBe('feeder');
+    expect(ranked[0]?.total).toBe(20);
+    expect(ranked[1]?.sitterId).toBe('photo');
+    expect(ranked[1]?.total).toBe(2);
+    expect(ranked[1]?.photos).toBe(1);
   });
 });
