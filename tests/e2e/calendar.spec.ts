@@ -14,6 +14,7 @@ test('a sitter can join, claim a hungry day, then leave it', async ({ page }, te
   await expect(page.getByRole('button', { name: 'Enregistrer' })).toBeVisible();
 
   const day = page.getByRole('button', { name: /^vendredi 4 septembre 2026,/ });
+  await expect(day).toBeEnabled();
   await expect(day).toContainText('Faim');
 
   await day.click();

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { useSittersStore } from '@/stores/sitters';
 import { scoreDeltaForToggle } from '@/utils/patounes';
 
@@ -10,8 +10,13 @@ const burstX = ref(0);
 const burstY = ref(0);
 const burstNonce = ref(0);
 
-onMounted(() => {
-  store.fetchAll();
+onMounted(async () => {
+  await store.fetchAll();
+  store.startRealtime();
+});
+
+onUnmounted(() => {
+  store.stopRealtime();
 });
 
 async function onSelectDate(isoDate: string, event: MouseEvent) {
