@@ -174,7 +174,7 @@ export const CARE_SECTIONS: CareSection[] = [
       },
       {
         type: 'p',
-        text: 'Si besoin, le sac de transport est dans l\'entrée, avec son carnet de santé dedans. L\'adresse de son vétérinaire habituel :'
+        text: 'Si besoin, le sac de transport est dans l\'entrée. La pochette santé est dans la poche sur le côté. L\'adresse de son vétérinaire habituel :'
       },
       {
         type: 'link',
@@ -183,7 +183,8 @@ export const CARE_SECTIONS: CareSection[] = [
       },
       {
         type: 'image',
-        alt: 'Le sac de transport de Malta'
+        alt: 'Le sac de transport de Malta',
+        src: '/care/emergency-carrier.jpg'
       }
     ]
   }

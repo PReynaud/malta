@@ -124,5 +124,8 @@ test('care instructions show food and water photos, with leftover placeholders',
   await expect(page.getByText(/papier toilette/)).toBeVisible();
 
   await page.locator('summary', { hasText: 'Urgences' }).click();
-  await expect(page.getByRole('link', { name: /Vétérinaire de Malta/ })).toBeVisible();
+  const emergency = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Urgences' }) });
+  await expect(emergency.getByRole('link', { name: /Vétérinaire de Malta/ })).toBeVisible();
+  await expect(emergency.getByRole('img', { name: 'Le sac de transport de Malta' })).toHaveAttribute('src', '/care/emergency-carrier.jpg');
+  await expect(emergency.getByText('Image à venir')).toHaveCount(0);
 });

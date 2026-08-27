@@ -32,6 +32,9 @@ describe('care guide', () => {
     expect(byId.toys?.blocks.some(block => block.type === 'p' && block.text.includes('bouchon de champagne'))).toBe(true);
     expect(byId.mess?.blocks.some(block => block.type === 'p' && block.text.includes('papier toilette'))).toBe(true);
     expect(byId.emergency?.blocks.some(block =>
+      block.type === 'p' && block.text.includes('pochette santé')
+    )).toBe(true);
+    expect(byId.emergency?.blocks.some(block =>
       block.type === 'link' && block.href === 'https://maps.app.goo.gl/dJxzphBvdmXNpLaH8'
     )).toBe(true);
 
@@ -92,8 +95,18 @@ describe('care guide', () => {
     ]);
   });
 
+  it('shows the emergency carrier in the urgences section', () => {
+    expect(imageBlocks('emergency')).toEqual([
+      {
+        type: 'image',
+        alt: 'Le sac de transport de Malta',
+        src: '/care/emergency-carrier.jpg'
+      }
+    ]);
+  });
+
   it('keeps photo placeholders in every other care section', () => {
-    for (const section of CARE_SECTIONS.filter(section => section.id !== 'water' && section.id !== 'food')) {
+    for (const section of CARE_SECTIONS.filter(section => !['water', 'food', 'emergency'].includes(section.id))) {
       const photos = section.blocks.filter(block => block.type === 'image');
 
       expect(photos.length).toBeGreaterThan(0);
