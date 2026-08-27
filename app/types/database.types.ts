@@ -87,18 +87,21 @@ export type Database = {
       }
       sitters: {
         Row: {
+          bonus_patounes: number
           color: string
           created_at: string
           id: string
           name: string
         }
         Insert: {
+          bonus_patounes?: number
           color: string
           created_at?: string
           id?: string
           name: string
         }
         Update: {
+          bonus_patounes?: number
           color?: string
           created_at?: string
           id?: string
@@ -111,7 +114,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_malta_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

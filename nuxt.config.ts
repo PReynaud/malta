@@ -22,7 +22,8 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      appName: 'Malta Calendar'
+      appName: 'Malta Calendar',
+      adminEmail: 'pierre.reynaud@outlook.com'
     }
   },
 

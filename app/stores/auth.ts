@@ -57,7 +57,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
-  const signOut = async () => {
+  const signOut = async (redirectTo = '/login') => {
     try {
       const { error } = await supabase.auth.signOut();
 
@@ -65,7 +65,7 @@ export const useAuthStore = defineStore('auth', () => {
         throw error;
       }
 
-      await navigateTo('/login');
+      await navigateTo(redirectTo);
       return { error: null };
     } catch (error: unknown) {
       return {
