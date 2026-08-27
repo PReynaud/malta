@@ -44,7 +44,17 @@ export const CARE_SECTIONS: CareSection[] = [
       },
       {
         type: 'image',
-        alt: 'La pâtée de Malta'
+        alt: 'Malta qui attend sa pâtée',
+        src: '/care/food-pate-malta.jpg'
+      },
+      {
+        type: 'p',
+        text: 'On la sert dans cette assiette-là.'
+      },
+      {
+        type: 'image',
+        alt: 'La pâtée de Malta dans son assiette',
+        src: '/care/food-pate-plate.jpg'
       }
     ]
   },

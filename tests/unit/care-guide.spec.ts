@@ -52,7 +52,7 @@ describe('care guide', () => {
     }
   });
 
-  it('shows the automatic feeder and kibble bag in the food section', () => {
+  it('shows kibble and pâté photos in the food section', () => {
     expect(imageBlocks('food')).toEqual([
       {
         type: 'image',
@@ -66,7 +66,13 @@ describe('care guide', () => {
       },
       {
         type: 'image',
-        alt: 'La pâtée de Malta'
+        alt: 'Malta qui attend sa pâtée',
+        src: '/care/food-pate-malta.jpg'
+      },
+      {
+        type: 'image',
+        alt: 'La pâtée de Malta dans son assiette',
+        src: '/care/food-pate-plate.jpg'
       }
     ]);
   });

@@ -92,7 +92,7 @@ test('the blinking patoune banner can be dismissed', async ({ page }) => {
   await expect(banner).toBeVisible();
 });
 
-test('care instructions show water and kibble photos, with leftover placeholders', async ({ page }) => {
+test('care instructions show food and water photos, with leftover placeholders', async ({ page }) => {
   await page.goto('/');
   await waitForNuxtHydration(page);
 
@@ -104,7 +104,9 @@ test('care instructions show water and kibble photos, with leftover placeholders
   await expect(food.getByText(/distributeur dans le couloir/)).toBeVisible();
   await expect(food.getByRole('img', { name: 'Le distributeur automatique de croquettes de Malta' })).toHaveAttribute('src', '/care/food-feeder.jpg');
   await expect(food.getByRole('img', { name: 'Le sac de croquettes Hill\'s Science Plan' })).toHaveAttribute('src', '/care/food-kibble-bag.jpg');
-  await expect(food.getByText('Image à venir')).toBeVisible();
+  await expect(food.getByRole('img', { name: 'Malta qui attend sa pâtée' })).toHaveAttribute('src', '/care/food-pate-malta.jpg');
+  await expect(food.getByRole('img', { name: 'La pâtée de Malta dans son assiette' })).toHaveAttribute('src', '/care/food-pate-plate.jpg');
+  await expect(food.getByText('Image à venir')).toHaveCount(0);
   await expect(food.getByText(/pâtée/i).first()).toBeVisible();
 
   await page.locator('summary', { hasText: 'Eau' }).click();

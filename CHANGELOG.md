@@ -14,6 +14,7 @@
 - Selected sitters can upload Malta photos for +2 patounes; a scrolling gallery sits under the leaderboard.
 - Water care photos: automatic fountain and refill bowls; other instruction photos stay placeholders.
 - Food kibble photos: automatic feeder and Hill's Science Plan bag; pâté photo still a placeholder.
+- Food pâté photos: Malta waiting, then the wet food on her plate.
 
 - September feeding calendar: pick a sitter by name and color, claim or leave a day, highlight empty bowls.
 - Warm grey-and-white Malta theme (no login on the public calendar).
