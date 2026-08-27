@@ -109,6 +109,12 @@ test('care instructions show food and water photos, with leftover placeholders',
   await expect(food.getByText('Image à venir')).toHaveCount(0);
   await expect(food.getByText(/pâtée/i).first()).toBeVisible();
 
+  await page.locator('summary', { hasText: 'Friandises' }).click();
+  const treats = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Friandises' }) });
+  await expect(treats.getByRole('img', { name: 'Le sachet de friandises Catisfactions à l\'herbe à chat' })).toHaveAttribute('src', '/care/treats-catisfactions.jpg');
+  await expect(treats.getByText(/Catisfactions/)).toBeVisible();
+  await expect(treats.getByText('Image à venir')).toHaveCount(0);
+
   await page.locator('summary', { hasText: 'Eau' }).click();
   const water = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Eau' }) });
   const fountain = water.getByRole('img', { name: 'La fontaine à eau automatique de Malta' });

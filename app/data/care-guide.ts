@@ -59,6 +59,22 @@ export const CARE_SECTIONS: CareSection[] = [
     ]
   },
   {
+    id: 'treats',
+    title: 'Friandises',
+    emoji: '🍬',
+    blocks: [
+      {
+        type: 'p',
+        text: 'Des Catisfactions à l\'herbe à chat. À donner de temps en temps, sans en abuser.'
+      },
+      {
+        type: 'image',
+        alt: 'Le sachet de friandises Catisfactions à l\'herbe à chat',
+        src: '/care/treats-catisfactions.jpg'
+      }
+    ]
+  },
+  {
     id: 'water',
     title: 'Eau',
     emoji: '💧',

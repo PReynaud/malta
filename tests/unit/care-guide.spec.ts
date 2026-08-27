@@ -12,6 +12,7 @@ describe('care guide', () => {
   it('covers every care topic with real copy and a photo slot', () => {
     expect(CARE_SECTIONS.map(section => section.id)).toEqual([
       'food',
+      'treats',
       'water',
       'litter',
       'pets',
@@ -25,6 +26,7 @@ describe('care guide', () => {
     expect(byId.food?.blocks.some(block => block.type === 'p' && block.text.includes('distributeur dans le couloir'))).toBe(true);
     expect(byId.food?.blocks.some(block => block.type === 'p' && block.text.includes('pâtée'))).toBe(true);
     expect(byId.food?.blocks.some(block => block.type === 'p' && block.text.includes('Hill\'s Science Plan'))).toBe(true);
+    expect(byId.treats?.blocks.some(block => block.type === 'p' && block.text.includes('Catisfactions'))).toBe(true);
     expect(byId.water?.blocks.some(block => block.type === 'p' && block.text.includes('ultraaaa'))).toBe(true);
     expect(byId.water?.blocks.some(block => block.type === 'p' && block.text.includes('gamelles à remplir'))).toBe(true);
     expect(byId.litter?.blocks.some(block => block.type === 'p' && block.text.includes('vide-ordures'))).toBe(true);
@@ -115,8 +117,18 @@ describe('care guide', () => {
     ]);
   });
 
+  it('shows Catisfactions treats in the friandises section', () => {
+    expect(imageBlocks('treats')).toEqual([
+      {
+        type: 'image',
+        alt: 'Le sachet de friandises Catisfactions à l\'herbe à chat',
+        src: '/care/treats-catisfactions.jpg'
+      }
+    ]);
+  });
+
   it('keeps photo placeholders in every other care section', () => {
-    for (const section of CARE_SECTIONS.filter(section => !['water', 'food', 'emergency', 'litter'].includes(section.id))) {
+    for (const section of CARE_SECTIONS.filter(section => !['water', 'food', 'emergency', 'litter', 'treats'].includes(section.id))) {
       const photos = section.blocks.filter(block => block.type === 'image');
 
       expect(photos.length).toBeGreaterThan(0);

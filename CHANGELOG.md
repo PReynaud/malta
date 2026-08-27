@@ -17,6 +17,7 @@
 - Food pâté photos: Malta waiting, then the wet food on her plate.
 - Emergency carrier photo, with the health pouch in the side pocket.
 - Litter box photo, with the scoop on the lid.
+- Treats section: Catisfactions catnip pouch.
 
 - September feeding calendar: pick a sitter by name and color, claim or leave a day, highlight empty bowls.
 - Warm grey-and-white Malta theme (no login on the public calendar).
