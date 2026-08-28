@@ -4,6 +4,7 @@ import { definePageMeta } from '#imports';
 import { useAdminStore } from '@/stores/admin';
 import { useAuthStore } from '@/stores/auth';
 import { patouneLabel } from '@/utils/patounes';
+import { parseBonusDelta } from '@/utils/admin';
 
 definePageMeta({
   middleware: 'admin',
@@ -14,6 +15,7 @@ const adminStore = useAdminStore();
 const authStore = useAuthStore();
 
 const query = ref('');
+const bonusDelta = ref<Record<string, string>>({});
 const confirmOpen = ref(false);
 const confirmTitle = ref('');
 const confirmDescription = ref('');
@@ -74,6 +76,23 @@ function confirmDeletePhoto(photoId: string, sitterName: string) {
     `La photo de ${sitterName} disparaîtra de la galerie et les patounes associées aussi.`,
     () => adminStore.deletePhoto(photoId)
   );
+}
+
+function bonusDeltaFor(sitterId: string): string {
+  return bonusDelta.value[sitterId] ?? '1';
+}
+
+function setBonusDelta(sitterId: string, value: unknown) {
+  bonusDelta.value[sitterId] = String(value ?? '').replace(/\D/g, '');
+}
+
+function applyBonus(sitterId: string, direction: 1 | -1) {
+  const delta = parseBonusDelta(bonusDeltaFor(sitterId));
+  if (delta <= 0) {
+    return;
+  }
+
+  void adminStore.adjustBonus(sitterId, direction * delta);
 }
 
 function confirmDeleteSitter(sitterId: string, name: string) {
@@ -172,35 +191,49 @@ function confirmDeleteSitter(sitterId: string, name: string) {
               @click="confirmDeleteSitter(row.sitterId, sitterById[row.sitterId]?.name ?? 'ce profil')"
             />
           </div>
-          <div class="mt-3 flex items-center gap-2">
+          <div class="mt-3 flex flex-wrap items-center gap-2">
             <UButton
               color="neutral"
               variant="subtle"
               size="lg"
               class="min-w-12 touch-manipulation"
-              :disabled="adminStore.loading || row.bonus <= 0"
-              :aria-label="`Retirer une patoune bonus à ${sitterById[row.sitterId]?.name}`"
+              :disabled="adminStore.loading || row.bonus <= 0 || parseBonusDelta(bonusDeltaFor(row.sitterId)) <= 0"
+              :aria-label="`Retirer des patounes bonus à ${sitterById[row.sitterId]?.name}`"
               label="−"
-              @click="adminStore.adjustBonus(row.sitterId, -1)"
+              @click="applyBonus(row.sitterId, -1)"
             />
-            <span
-              class="min-w-10 text-center text-sm font-black tabular-nums"
-              data-testid="admin-bonus-count"
-            >
-              {{ row.bonus }}
-            </span>
+            <div class="w-24">
+              <UInput
+                :model-value="bonusDeltaFor(row.sitterId)"
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                maxlength="4"
+                size="lg"
+                class="w-full"
+                data-testid="admin-bonus-delta"
+                :aria-label="`Nombre de patounes bonus à ajouter ou retirer pour ${sitterById[row.sitterId]?.name}`"
+                @update:model-value="setBonusDelta(row.sitterId, $event)"
+              />
+            </div>
             <UButton
               color="primary"
               variant="subtle"
               size="lg"
               class="min-w-12 touch-manipulation"
-              :disabled="adminStore.loading"
-              :aria-label="`Ajouter une patoune bonus à ${sitterById[row.sitterId]?.name}`"
+              :disabled="adminStore.loading || parseBonusDelta(bonusDeltaFor(row.sitterId)) <= 0"
+              :aria-label="`Ajouter des patounes bonus à ${sitterById[row.sitterId]?.name}`"
               label="+"
-              @click="adminStore.adjustBonus(row.sitterId, 1)"
+              @click="applyBonus(row.sitterId, 1)"
             />
             <span class="text-xs text-muted">
-              patounes bonus
+              quantité
+            </span>
+            <span
+              class="ml-auto text-sm font-black tabular-nums text-highlighted"
+              data-testid="admin-bonus-count"
+            >
+              bonus {{ row.bonus }}
             </span>
           </div>
         </li>

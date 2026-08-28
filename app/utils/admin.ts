@@ -21,3 +21,31 @@ export function nextBonusPatounes(current: number, delta: number): number {
   const safeDelta = Number.isFinite(delta) ? delta : 0;
   return Math.max(0, Math.trunc(safeCurrent + safeDelta));
 }
+
+export function parseBonusDelta(value: string | number | null | undefined): number {
+  const maxDelta = 9999;
+
+  if (typeof value === 'number') {
+    if (!Number.isInteger(value) || value <= 0) {
+      return 0;
+    }
+
+    return Math.min(maxDelta, value);
+  }
+
+  if (typeof value !== 'string') {
+    return 0;
+  }
+
+  const trimmed = value.trim();
+  if (!/^\d+$/.test(trimmed)) {
+    return 0;
+  }
+
+  const parsed = Number.parseInt(trimmed, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return 0;
+  }
+
+  return Math.min(maxDelta, parsed);
+}
