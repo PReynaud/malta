@@ -98,22 +98,24 @@ test.describe('admin dashboard', () => {
     const sitterCard = page.locator('[data-testid^="admin-sitter-"]').filter({ hasText: sitterName });
     await expect(sitterCard).toBeVisible();
     await expect(sitterCard.getByText('2 patounes')).toBeVisible();
-    await expect(sitterCard.getByTestId('admin-bonus-count')).toHaveText('0');
+    await expect(sitterCard.getByTestId('admin-bonus-count')).toHaveText('bonus 0');
 
-    await sitterCard.getByRole('button', { name: `Ajouter une patoune bonus à ${sitterName}` }).click();
-    await expect(sitterCard.getByTestId('admin-bonus-count')).toHaveText('1');
-    await expect(sitterCard.getByText('3 patounes')).toBeVisible();
+    await sitterCard.getByLabel(`Nombre de patounes bonus à ajouter ou retirer pour ${sitterName}`).fill('5');
+    await sitterCard.getByRole('button', { name: `Ajouter des patounes bonus à ${sitterName}` }).click();
+    await expect(sitterCard.getByTestId('admin-bonus-count')).toHaveText('bonus 5');
+    await expect(sitterCard.getByText('7 patounes')).toBeVisible();
 
     await page.goto('/');
     await waitForNuxtHydration(page);
-    await expect(page.getByRole('listitem').filter({ hasText: sitterName }).getByText('3 patounes', { exact: true })).toBeVisible();
+    await expect(page.getByRole('listitem').filter({ hasText: sitterName }).getByText('7 patounes', { exact: true })).toBeVisible();
 
     await page.goto('/admin');
     await waitForNuxtHydration(page);
     await expect(sitterCard).toBeVisible();
 
-    await sitterCard.getByRole('button', { name: `Retirer une patoune bonus à ${sitterName}` }).click();
-    await expect(sitterCard.getByTestId('admin-bonus-count')).toHaveText('0');
+    await sitterCard.getByLabel(`Nombre de patounes bonus à ajouter ou retirer pour ${sitterName}`).fill('5');
+    await sitterCard.getByRole('button', { name: `Retirer des patounes bonus à ${sitterName}` }).click();
+    await expect(sitterCard.getByTestId('admin-bonus-count')).toHaveText('bonus 0');
     await expect(sitterCard.getByText('2 patounes')).toBeVisible();
 
     const photoCard = page.locator('[data-testid^="admin-photo-"]').filter({ hasText: sitterName });
