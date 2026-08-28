@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import { useSupabaseClient } from '#imports';
-import { getErrorMessage } from '@/utils/error-message';
+import { getErrorMessage, isUnauthorizedError } from '@/utils/error-message';
 import { nextBonusPatounes } from '@/utils/admin';
 import { groupSlotsByDate } from '@/utils/calendar';
 import { rankSitters } from '@/utils/patounes';
@@ -57,32 +57,46 @@ export const useAdminStore = defineStore('admin', () => {
     );
   });
 
+  const queryAll = () => Promise.all([
+    supabase.from('sitters').select('*').order('name', { ascending: true }),
+    supabase.from('malta_photos').select('*').order('created_at', { ascending: false }),
+    supabase.from('feeding_slots').select('*')
+  ]);
+
   const fetchAll = async () => {
     loading.value = true;
     error.value = null;
 
     try {
-      const [sittersResult, photosResult, slotsResult] = await Promise.all([
-        supabase.from('sitters').select('*').order('name', { ascending: true }),
-        supabase.from('malta_photos').select('*').order('created_at', { ascending: false }),
-        supabase.from('feeding_slots').select('*')
-      ]);
+      await supabase.auth.getSession();
+      let [sittersResult, photosResult, slotsResult] = await queryAll();
 
-      if (sittersResult.error) {
-        throw sittersResult.error;
+      if (
+        isUnauthorizedError(sittersResult.error)
+        || isUnauthorizedError(photosResult.error)
+        || isUnauthorizedError(slotsResult.error)
+      ) {
+        await supabase.auth.refreshSession();
+        [sittersResult, photosResult, slotsResult] = await queryAll();
       }
 
-      if (photosResult.error) {
-        throw photosResult.error;
+      if (sittersResult.data) {
+        sitters.value = sittersResult.data;
       }
 
-      if (slotsResult.error) {
-        throw slotsResult.error;
+      if (photosResult.data) {
+        photos.value = photosResult.data;
       }
 
-      sitters.value = sittersResult.data ?? [];
-      photos.value = photosResult.data ?? [];
-      slots.value = slotsResult.data ?? [];
+      if (slotsResult.data) {
+        slots.value = slotsResult.data;
+      }
+
+      const firstError = sittersResult.error || photosResult.error || slotsResult.error;
+      if (firstError) {
+        throw firstError;
+      }
+
       return { data: sitters.value, error: null };
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err, 'Impossible de charger l\'admin');
