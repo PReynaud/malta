@@ -15,7 +15,7 @@ const { visible, restore } = usePatouneBanner();
         to="/"
         class="flex min-w-0 items-center gap-2"
       >
-        <AppLogo class="h-8 w-8 shrink-0 sm:h-9 sm:w-9" />
+        <AppLogo class="h-9 w-9 shrink-0 object-contain sm:h-10 sm:w-10" />
         <span class="truncate font-semibold text-highlighted">{{ appName }}</span>
       </NuxtLink>
 
