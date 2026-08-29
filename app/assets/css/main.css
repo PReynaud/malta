@@ -119,6 +119,20 @@ html.dark {
   background: #edece8;
 }
 
+.malta-photo-frame-button {
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+  transition: transform 0.15s ease;
+}
+
+.malta-photo-frame-button:hover .malta-photo-frame,
+.malta-photo-frame-button:focus-visible .malta-photo-frame {
+  transform: scale(1.03);
+}
+
 .malta-mood-burst {
   animation: malta-mood-pop 0.9s ease-out forwards;
 }

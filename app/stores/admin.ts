@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import { useSupabaseClient } from '#imports';
 import { getErrorMessage, isUnauthorizedError } from '@/utils/error-message';
-import { nextBonusPatounes } from '@/utils/admin';
+import { nextBonusPatounes, nextMalusPatounes } from '@/utils/admin';
 import { groupSlotsByDate } from '@/utils/calendar';
 import { rankSitters } from '@/utils/patounes';
 import type { Database } from '@/types/database.types';
@@ -43,9 +43,11 @@ export const useAdminStore = defineStore('admin', () => {
   const rankedSitters = computed(() => {
     const names: Record<string, string> = {};
     const bonusCounts: Record<string, number> = {};
+    const malusCounts: Record<string, number> = {};
     for (const sitter of sitters.value) {
       names[sitter.id] = sitter.name;
       bonusCounts[sitter.id] = sitter.bonus_patounes;
+      malusCounts[sitter.id] = sitter.malus_patounes;
     }
 
     return rankSitters(
@@ -53,7 +55,8 @@ export const useAdminStore = defineStore('admin', () => {
       slotsByDate.value,
       names,
       photoCounts.value,
-      bonusCounts
+      bonusCounts,
+      malusCounts
     );
   });
 
@@ -139,6 +142,45 @@ export const useAdminStore = defineStore('admin', () => {
       return { data, error: null };
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err, 'Impossible de modifier les patounes bonus');
+      error.value = errorMessage;
+      return { data: null, error: errorMessage };
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const adjustMalus = async (sitterId: string, delta: number) => {
+    const sitter = sitters.value.find(item => item.id === sitterId);
+    if (!sitter) {
+      const errorMessage = 'Profil introuvable.';
+      error.value = errorMessage;
+      return { data: null, error: errorMessage };
+    }
+
+    const malus_patounes = nextMalusPatounes(sitter.malus_patounes, delta);
+    if (malus_patounes === sitter.malus_patounes) {
+      return { data: sitter, error: null };
+    }
+
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const { data, error: updateError } = await supabase
+        .from('sitters')
+        .update({ malus_patounes })
+        .eq('id', sitterId)
+        .select()
+        .single();
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      sitters.value = sitters.value.map(item => (item.id === sitterId ? data : item));
+      return { data, error: null };
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err, 'Impossible de modifier les malus');
       error.value = errorMessage;
       return { data: null, error: errorMessage };
     } finally {
@@ -239,6 +281,7 @@ export const useAdminStore = defineStore('admin', () => {
     rankedSitters,
     fetchAll,
     adjustBonus,
+    adjustMalus,
     deletePhoto,
     deleteSitter
   };

@@ -127,6 +127,7 @@ describe('patounes', () => {
       days: 1,
       photos: 1,
       bonus: 5,
+      malus: 0,
       total: 20 + 2 + 5
     });
 
@@ -142,5 +143,31 @@ describe('patounes', () => {
     expect(ranked[0]?.total).toBe(21);
     expect(ranked[1]?.sitterId).toBe('feeder');
     expect(ranked[1]?.total).toBe(20);
+  });
+
+  it('subtracts stored malus patounes and never goes below zero', () => {
+    const score = scoreSitter('a', { '2026-09-04': ['a'] }, 0, 0, 5);
+    expect(score).toMatchObject({
+      days: 1,
+      bonus: 0,
+      malus: 5,
+      total: 15
+    });
+
+    expect(scoreSitter('a', { '2026-09-04': ['a'] }, 0, 0, 25).total).toBe(0);
+
+    const ranked = rankSitters(
+      ['penalized', 'feeder'],
+      { '2026-09-04': ['feeder', 'penalized'] },
+      { penalized: 'Pénalisé', feeder: 'Nounou' },
+      { penalized: 0, feeder: 0 },
+      { penalized: 0, feeder: 0 },
+      { penalized: 5, feeder: 0 }
+    );
+
+    expect(ranked[0]?.sitterId).toBe('feeder');
+    expect(ranked[0]?.total).toBe(10);
+    expect(ranked[1]?.sitterId).toBe('penalized');
+    expect(ranked[1]?.total).toBe(5);
   });
 });

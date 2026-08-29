@@ -25,6 +25,13 @@ test('a selected sitter can upload a Malta photo and gain two patounes', async (
   await expect(page.getByRole('img', { name: `Photo de Malta par ${name}` })).toBeVisible();
   await expect(page.locator('[data-testid="malta-photo-marquee"] img')).toHaveCount(1);
 
+  await page.getByRole('button', { name: `Agrandir Photo de Malta par ${name}` }).click();
+  const lightbox = page.getByTestId('malta-photo-lightbox');
+  await expect(lightbox).toBeVisible();
+  await expect(page.getByTestId('malta-photo-lightbox-image')).toHaveAttribute('src', /.+/);
+  await page.getByTestId('malta-photo-lightbox-close').click();
+  await expect(lightbox).toHaveCount(0);
+
   const row = page.getByRole('listitem').filter({ hasText: name });
   await expect(row.getByText('2 patounes', { exact: true })).toBeVisible();
 });

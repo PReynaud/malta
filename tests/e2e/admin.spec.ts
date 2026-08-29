@@ -118,6 +118,24 @@ test.describe('admin dashboard', () => {
     await expect(sitterCard.getByTestId('admin-bonus-count')).toHaveText('bonus 0');
     await expect(sitterCard.getByText('2 patounes')).toBeVisible();
 
+    await sitterCard.getByLabel(`Nombre de malus à ajouter ou retirer pour ${sitterName}`).fill('1');
+    await sitterCard.getByRole('button', { name: `Ajouter des malus à ${sitterName}` }).click();
+    await expect(sitterCard.getByTestId('admin-malus-count')).toHaveText('malus 1');
+    await expect(sitterCard.getByText('1 patoune')).toBeVisible();
+
+    await page.goto('/');
+    await waitForNuxtHydration(page);
+    await expect(page.getByRole('listitem').filter({ hasText: sitterName }).getByText('1 patoune', { exact: true })).toBeVisible();
+
+    await page.goto('/admin');
+    await waitForNuxtHydration(page);
+    await expect(sitterCard).toBeVisible();
+
+    await sitterCard.getByLabel(`Nombre de malus à ajouter ou retirer pour ${sitterName}`).fill('1');
+    await sitterCard.getByRole('button', { name: `Retirer des malus à ${sitterName}` }).click();
+    await expect(sitterCard.getByTestId('admin-malus-count')).toHaveText('malus 0');
+    await expect(sitterCard.getByText('2 patounes')).toBeVisible();
+
     const photoCard = page.locator('[data-testid^="admin-photo-"]').filter({ hasText: sitterName });
     await expect(photoCard).toBeVisible();
     await photoCard.getByRole('button', { name: 'Supprimer' }).click();

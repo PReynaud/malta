@@ -161,7 +161,8 @@ export const CARE_SECTIONS: CareSection[] = [
       },
       {
         type: 'image',
-        alt: 'Malta en mode gratouilles'
+        alt: 'Malta ventre en l\'air sur son arbre à chat, prête pour les gratouilles',
+        src: '/care/pets-belly.jpg'
       }
     ]
   },
@@ -180,7 +181,13 @@ export const CARE_SECTIONS: CareSection[] = [
       },
       {
         type: 'image',
-        alt: 'Les jouets de Malta'
+        alt: 'Les jouets de Malta',
+        src: '/care/toys-collection.jpg'
+      },
+      {
+        type: 'image',
+        alt: 'La canne à plumes de Malta',
+        src: '/care/toys-feather-wand.jpg'
       },
       {
         type: 'p',
@@ -205,10 +212,6 @@ export const CARE_SECTIONS: CareSection[] = [
       {
         type: 'p',
         text: 'Pour finir de nettoyer, il y a des chiffons près de l\'évier de la cuisine, et de la javel en dessous.'
-      },
-      {
-        type: 'image',
-        alt: 'Le coin nettoyage'
       }
     ]
   },

@@ -43,7 +43,7 @@ describe('care guide', () => {
       block.type === 'link' && block.href === 'https://maps.app.goo.gl/dJxzphBvdmXNpLaH8'
     )).toBe(true);
 
-    for (const section of CARE_SECTIONS) {
+    for (const section of CARE_SECTIONS.filter(section => section.id !== 'mess')) {
       expect(section.blocks.some(block => block.type === 'image')).toBe(true);
     }
   });
@@ -162,12 +162,28 @@ describe('care guide', () => {
     expect(imageBlocks('toys')).toEqual([
       {
         type: 'image',
-        alt: 'Les jouets de Malta'
+        alt: 'Les jouets de Malta',
+        src: '/care/toys-collection.jpg'
+      },
+      {
+        type: 'image',
+        alt: 'La canne à plumes de Malta',
+        src: '/care/toys-feather-wand.jpg'
       },
       {
         type: 'image',
         alt: 'Le sachet de friandises Catisfactions à l\'herbe à chat',
         src: '/care/treats-catisfactions.jpg'
+      }
+    ]);
+  });
+
+  it('shows Malta belly-up in the gratouilles section', () => {
+    expect(imageBlocks('pets')).toEqual([
+      {
+        type: 'image',
+        alt: 'Malta ventre en l\'air sur son arbre à chat, prête pour les gratouilles',
+        src: '/care/pets-belly.jpg'
       }
     ]);
   });
@@ -180,14 +196,5 @@ describe('care guide', () => {
         src: '/care/identify-malta.jpg'
       }
     ]);
-  });
-
-  it('keeps photo placeholders in every other care section', () => {
-    for (const section of CARE_SECTIONS.filter(section => !['identify', 'water', 'food', 'emergency', 'litter', 'toys'].includes(section.id))) {
-      const photos = section.blocks.filter(block => block.type === 'image');
-
-      expect(photos.length).toBeGreaterThan(0);
-      expect(photos.every(block => block.type === 'image' && !block.src)).toBe(true);
-    }
   });
 });

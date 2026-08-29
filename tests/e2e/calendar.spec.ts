@@ -121,9 +121,12 @@ test('care instructions show food and water photos, with leftover placeholders',
   await expect(page.locator('summary', { hasText: 'Friandises' })).toHaveCount(0);
   await page.locator('summary', { hasText: 'Jouets' }).click();
   const toys = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Jouets' }) });
+  await expect(toys.getByRole('img', { name: 'Les jouets de Malta' })).toHaveAttribute('src', '/care/toys-collection.jpg');
+  await expect(toys.getByRole('img', { name: 'La canne à plumes de Malta' })).toHaveAttribute('src', '/care/toys-feather-wand.jpg');
   await expect(toys.getByRole('img', { name: 'Le sachet de friandises Catisfactions à l\'herbe à chat' })).toHaveAttribute('src', '/care/treats-catisfactions.jpg');
   await expect(toys.getByText(/Catisfactions/)).toBeVisible();
   await expect(toys.getByText(/bouchon de champagne/)).toBeVisible();
+  await expect(toys.getByText('Image à venir')).toHaveCount(0);
 
   await page.locator('summary', { hasText: 'Eau' }).click();
   const water = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Eau' }) });
@@ -141,8 +144,15 @@ test('care instructions show food and water photos, with leftover placeholders',
   await expect(litter.getByRole('img', { name: 'Une des litières de Malta, avec la pelle sur le couvercle' })).toHaveAttribute('src', '/care/litter-box.jpg');
   await expect(litter.getByText('Image à venir')).toHaveCount(0);
 
+  await page.locator('summary', { hasText: 'Gratouilles' }).click();
+  const pets = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Gratouilles' }) });
+  await expect(pets.getByRole('img', { name: 'Malta ventre en l\'air sur son arbre à chat, prête pour les gratouilles' })).toHaveAttribute('src', '/care/pets-belly.jpg');
+  await expect(pets.getByText(/barbe/)).toBeVisible();
+  await expect(pets.getByText('Image à venir')).toHaveCount(0);
+
   await page.locator('summary', { hasText: 'Saletés' }).click();
   await expect(page.getByText(/papier toilette/)).toBeVisible();
+  await expect(page.getByText('Image à venir')).toHaveCount(0);
 
   await page.locator('summary', { hasText: 'Urgences' }).click();
   const emergency = page.locator('details').filter({ has: page.locator('summary', { hasText: 'Urgences' }) });
