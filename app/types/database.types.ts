@@ -91,6 +91,7 @@ export type Database = {
           color: string
           created_at: string
           id: string
+          malus_patounes: number
           name: string
         }
         Insert: {
@@ -98,6 +99,7 @@ export type Database = {
           color: string
           created_at?: string
           id?: string
+          malus_patounes?: number
           name: string
         }
         Update: {
@@ -105,6 +107,7 @@ export type Database = {
           color?: string
           created_at?: string
           id?: string
+          malus_patounes?: number
           name?: string
         }
         Relationships: []

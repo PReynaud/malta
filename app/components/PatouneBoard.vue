@@ -22,9 +22,11 @@ const props = defineProps<{
 const ranked = computed(() => {
   const names: Record<string, string> = {};
   const bonusCounts: Record<string, number> = {};
+  const malusCounts: Record<string, number> = {};
   for (const sitter of props.sitters) {
     names[sitter.id] = sitter.name;
     bonusCounts[sitter.id] = sitter.bonus_patounes;
+    malusCounts[sitter.id] = sitter.malus_patounes;
   }
 
   return rankSitters(
@@ -32,7 +34,8 @@ const ranked = computed(() => {
     props.slotsByDate,
     names,
     props.photoCounts ?? {},
-    bonusCounts
+    bonusCounts,
+    malusCounts
   );
 });
 

@@ -16,6 +16,7 @@ const authStore = useAuthStore();
 
 const query = ref('');
 const bonusDelta = ref<Record<string, string>>({});
+const malusDelta = ref<Record<string, string>>({});
 const confirmOpen = ref(false);
 const confirmTitle = ref('');
 const confirmDescription = ref('');
@@ -95,6 +96,23 @@ function applyBonus(sitterId: string, direction: 1 | -1) {
   void adminStore.adjustBonus(sitterId, direction * delta);
 }
 
+function malusDeltaFor(sitterId: string): string {
+  return malusDelta.value[sitterId] ?? '1';
+}
+
+function setMalusDelta(sitterId: string, value: unknown) {
+  malusDelta.value[sitterId] = String(value ?? '').replace(/\D/g, '');
+}
+
+function applyMalus(sitterId: string, direction: 1 | -1) {
+  const delta = parseBonusDelta(malusDeltaFor(sitterId));
+  if (delta <= 0) {
+    return;
+  }
+
+  void adminStore.adjustMalus(sitterId, direction * delta);
+}
+
 function confirmDeleteSitter(sitterId: string, name: string) {
   openConfirm(
     `Supprimer ${name} ?`,
@@ -135,7 +153,7 @@ function confirmDeleteSitter(sitterId: string, name: string) {
 
     <section class="space-y-3 rounded-3xl border border-default bg-default/80 p-4">
       <h2 class="text-lg font-bold text-highlighted">
-        Profils et patounes bonus
+        Profils, bonus et malus
       </h2>
       <UInput
         v-model="query"
@@ -179,6 +197,7 @@ function confirmDeleteSitter(sitterId: string, name: string) {
               <p class="text-sm text-muted">
                 {{ patouneLabel(row.total) }}
                 · bonus {{ row.bonus }}
+                · malus {{ row.malus }}
               </p>
             </div>
             <UButton
@@ -227,13 +246,58 @@ function confirmDeleteSitter(sitterId: string, name: string) {
               @click="applyBonus(row.sitterId, 1)"
             />
             <span class="text-xs text-muted">
-              quantité
+              bonus
             </span>
             <span
               class="ml-auto text-sm font-black tabular-nums text-highlighted"
               data-testid="admin-bonus-count"
             >
               bonus {{ row.bonus }}
+            </span>
+          </div>
+          <div class="mt-2 flex flex-wrap items-center gap-2">
+            <UButton
+              color="neutral"
+              variant="subtle"
+              size="lg"
+              class="min-w-12 touch-manipulation"
+              :disabled="adminStore.loading || row.malus <= 0 || parseBonusDelta(malusDeltaFor(row.sitterId)) <= 0"
+              :aria-label="`Retirer des malus à ${sitterById[row.sitterId]?.name}`"
+              label="−"
+              @click="applyMalus(row.sitterId, -1)"
+            />
+            <div class="w-24">
+              <UInput
+                :model-value="malusDeltaFor(row.sitterId)"
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                maxlength="4"
+                size="lg"
+                class="w-full"
+                data-testid="admin-malus-delta"
+                :aria-label="`Nombre de malus à ajouter ou retirer pour ${sitterById[row.sitterId]?.name}`"
+                @update:model-value="setMalusDelta(row.sitterId, $event)"
+              />
+            </div>
+            <UButton
+              color="error"
+              variant="subtle"
+              size="lg"
+              class="min-w-12 touch-manipulation"
+              :disabled="adminStore.loading || parseBonusDelta(malusDeltaFor(row.sitterId)) <= 0"
+              :aria-label="`Ajouter des malus à ${sitterById[row.sitterId]?.name}`"
+              label="+"
+              @click="applyMalus(row.sitterId, 1)"
+            />
+            <span class="text-xs text-muted">
+              malus
+            </span>
+            <span
+              class="ml-auto text-sm font-black tabular-nums text-highlighted"
+              data-testid="admin-malus-count"
+            >
+              malus {{ row.malus }}
             </span>
           </div>
         </li>

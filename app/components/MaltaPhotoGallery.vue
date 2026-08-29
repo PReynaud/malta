@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import { needsMarqueeLoop } from '@/utils/marquee';
 import { PATOUNE_PHOTO } from '@/utils/patounes';
 import type { MaltaGalleryItem } from '@/stores/malta-photos';
@@ -17,6 +17,7 @@ const emit = defineEmits<{
 }>();
 
 const lastClick = ref({ x: 0, y: 0 });
+const selectedPhoto = ref<MaltaGalleryItem | null>(null);
 const maskEl = ref<HTMLElement | null>(null);
 const contentEl = ref<HTMLElement | null>(null);
 const looping = ref(false);
@@ -96,6 +97,44 @@ function photoAlt(photo: MaltaGalleryItem): string {
   const sitterName = sitterById.value[photo.sitter_id]?.name;
   return sitterName ? `Photo de Malta par ${sitterName}` : 'Photo de Malta';
 }
+
+function openPhoto(photo: MaltaGalleryItem) {
+  selectedPhoto.value = photo;
+}
+
+function closePhoto() {
+  selectedPhoto.value = null;
+}
+
+function onLightboxKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    closePhoto();
+  }
+}
+
+watch(selectedPhoto, (photo) => {
+  if (!import.meta.client) {
+    return;
+  }
+
+  if (photo) {
+    document.addEventListener('keydown', onLightboxKeydown);
+    document.body.style.overflow = 'hidden';
+    return;
+  }
+
+  document.removeEventListener('keydown', onLightboxKeydown);
+  document.body.style.overflow = '';
+});
+
+onUnmounted(() => {
+  if (!import.meta.client) {
+    return;
+  }
+
+  document.removeEventListener('keydown', onLightboxKeydown);
+  document.body.style.overflow = '';
+});
 </script>
 
 <template>
@@ -119,14 +158,21 @@ function photoAlt(photo: MaltaGalleryItem): string {
           ref="contentEl"
           class="flex gap-3"
         >
-          <img
+          <button
             v-for="photo in photos"
             :key="photo.id"
-            :src="photo.publicUrl"
-            :alt="photoAlt(photo)"
-            class="malta-photo-frame"
-            @load="updateLooping"
+            type="button"
+            class="malta-photo-frame-button touch-manipulation"
+            :aria-label="`Agrandir ${photoAlt(photo)}`"
+            @click="openPhoto(photo)"
           >
+            <img
+              :src="photo.publicUrl"
+              :alt="photoAlt(photo)"
+              class="malta-photo-frame"
+              @load="updateLooping"
+            >
+          </button>
         </div>
         <div
           v-if="looping"
@@ -186,5 +232,32 @@ function photoAlt(photo: MaltaGalleryItem): string {
       >📷</span>
       Envoyer une photo
     </label>
+
+    <div
+      v-if="selectedPhoto"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+      role="dialog"
+      aria-modal="true"
+      :aria-label="photoAlt(selectedPhoto)"
+      data-testid="malta-photo-lightbox"
+      @click="closePhoto"
+    >
+      <button
+        type="button"
+        class="absolute right-3 top-3 rounded-full bg-black/50 px-3 py-1 text-sm font-semibold text-white touch-manipulation"
+        aria-label="Fermer la photo agrandie"
+        data-testid="malta-photo-lightbox-close"
+        @click="closePhoto"
+      >
+        Fermer
+      </button>
+      <img
+        :src="selectedPhoto.publicUrl"
+        :alt="photoAlt(selectedPhoto)"
+        class="max-h-[85vh] max-w-full rounded-2xl object-contain shadow-lg"
+        data-testid="malta-photo-lightbox-image"
+        @click.stop
+      >
+    </div>
   </section>
 </template>

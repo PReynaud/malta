@@ -22,6 +22,8 @@ export function nextBonusPatounes(current: number, delta: number): number {
   return Math.max(0, Math.trunc(safeCurrent + safeDelta));
 }
 
+export const nextMalusPatounes = nextBonusPatounes;
+
 export function parseBonusDelta(value: string | number | null | undefined): number {
   const maxDelta = 9999;
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { ADMIN_EMAIL, isAdminUser, nextBonusPatounes, parseBonusDelta } from '../../app/utils/admin';
+import { ADMIN_EMAIL, isAdminUser, nextBonusPatounes, nextMalusPatounes, parseBonusDelta } from '../../app/utils/admin';
 
 describe('admin', () => {
   it('recognizes only the seeded admin email with app_metadata role', () => {
@@ -83,6 +83,12 @@ describe('admin', () => {
     expect(nextBonusPatounes(1.8, 1.2)).toBe(3);
   });
 
+  it('steps malus patounes the same way as bonus', () => {
+    expect(nextMalusPatounes(0, 3)).toBe(3);
+    expect(nextMalusPatounes(5, -2)).toBe(3);
+    expect(nextMalusPatounes(1, -5)).toBe(0);
+  });
+
   it('parses a positive whole number for bonus add or remove', () => {
     expect(parseBonusDelta('10')).toBe(10);
     expect(parseBonusDelta(' 3 ')).toBe(3);
@@ -104,7 +110,9 @@ describe('admin', () => {
   it('lets the admin type how many bonus patounes to add or remove', () => {
     const source = readFileSync(resolve(process.cwd(), 'app/pages/admin/index.vue'), 'utf8');
     expect(source).toContain('data-testid="admin-bonus-delta"');
+    expect(source).toContain('data-testid="admin-malus-delta"');
     expect(source).toContain('applyBonus');
+    expect(source).toContain('applyMalus');
     expect(source).toContain('parseBonusDelta');
   });
 });
