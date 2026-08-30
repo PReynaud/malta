@@ -38,6 +38,21 @@ export type Database = {
           },
         ]
       }
+      locked_feed_dates: {
+        Row: {
+          feed_date: string
+          locked_at: string
+        }
+        Insert: {
+          feed_date: string
+          locked_at?: string
+        }
+        Update: {
+          feed_date?: string
+          locked_at?: string
+        }
+        Relationships: []
+      }
       malta_photos: {
         Row: {
           created_at: string

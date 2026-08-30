@@ -4,7 +4,9 @@ import {
   buildVacationGrid,
   dayAriaLabel,
   dayEmoji,
+  isFeedDateAdminLocked,
   isFeedDateLocked,
+  isFeedDateReadOnly,
   isLightHex,
   isOctoberOverflow,
   isUncoveredDate,
@@ -20,6 +22,7 @@ import type { Sitter } from '@/stores/sitters';
 const props = defineProps<{
   sitters: Sitter[];
   slotsByDate: Record<string, string[]>;
+  lockedDates?: readonly string[];
   selectedSitterId: string | null;
   loading: boolean;
 }>();
@@ -61,8 +64,16 @@ function isSelectedOnDate(isoDate: string): boolean {
   return (props.slotsByDate[isoDate] ?? []).includes(props.selectedSitterId);
 }
 
-function isLocked(isoDate: string): boolean {
+function isPastLocked(isoDate: string): boolean {
   return isFeedDateLocked(isoDate, today.value);
+}
+
+function isAdminLocked(isoDate: string): boolean {
+  return isFeedDateAdminLocked(isoDate, props.lockedDates ?? []);
+}
+
+function isReadOnly(isoDate: string): boolean {
+  return isFeedDateReadOnly(isoDate, props.lockedDates ?? [], today.value);
 }
 
 function sitterInitial(name: string): string {
@@ -99,6 +110,10 @@ function sitterInitial(name: string): string {
           <span aria-hidden="true">🔒</span>
           Clos
         </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="size-3 rounded-sm bg-primary/20 ring-1 ring-primary/50" />
+          Verrouillé
+        </span>
       </div>
     </div>
 
@@ -126,24 +141,39 @@ function sitterInitial(name: string): string {
             isUncoveredDate(cell.isoDate, slotsByDate)
               ? 'border-secondary-400 bg-secondary-100 dark:bg-secondary-900/40'
               : 'border-default bg-elevated',
-            isLocked(cell.isoDate)
+            isAdminLocked(cell.isoDate) && !isPastLocked(cell.isoDate)
+              ? 'border-primary/40 bg-primary/5'
+              : '',
+            isReadOnly(cell.isoDate)
               ? 'cursor-not-allowed opacity-80'
               : isUncoveredDate(cell.isoDate, slotsByDate)
                 ? 'hover:bg-secondary-200 dark:hover:bg-secondary-900/70'
                 : 'hover:border-highlighted',
             isSelectedOnDate(cell.isoDate) ? 'ring-2 ring-primary' : ''
           ]"
-          :aria-label="dayAriaLabel(cell.isoDate, namesForDate(cell.isoDate), isLocked(cell.isoDate))"
-          :disabled="loading || isLocked(cell.isoDate)"
+          :aria-label="dayAriaLabel(
+            cell.isoDate,
+            namesForDate(cell.isoDate),
+            isPastLocked(cell.isoDate),
+            isAdminLocked(cell.isoDate)
+          )"
+          :disabled="loading || isReadOnly(cell.isoDate)"
           @click="emit('selectDate', cell.isoDate, $event)"
         >
           <span class="flex items-start justify-between gap-0.5">
             <span class="text-sm font-bold sm:text-xl">{{ cell.day }}</span>
             <span
-              v-if="isLocked(cell.isoDate)"
+              v-if="isPastLocked(cell.isoDate)"
               class="rounded-full bg-default px-1 py-px text-[9px] font-semibold uppercase tracking-wide text-muted ring-1 ring-default sm:px-2 sm:py-0.5 sm:text-xs"
             >
               Clos
+            </span>
+            <span
+              v-else-if="isAdminLocked(cell.isoDate)"
+              class="inline-flex items-center gap-0.5 rounded-full bg-primary/15 px-1 py-px text-[9px] font-semibold uppercase tracking-wide text-primary sm:gap-1 sm:px-2 sm:py-0.5 sm:text-xs"
+            >
+              <span aria-hidden="true">🔒</span>
+              Verrouillé
             </span>
             <span
               v-else-if="isUncoveredDate(cell.isoDate, slotsByDate)"

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { definePageMeta } from '#imports';
+import AdminCalendar from '@/components/AdminCalendar.vue';
 import { useAdminStore } from '@/stores/admin';
 import { useAuthStore } from '@/stores/auth';
 import { patouneLabel } from '@/utils/patounes';
@@ -120,6 +121,41 @@ function confirmDeleteSitter(sitterId: string, name: string) {
     () => adminStore.deleteSitter(sitterId)
   );
 }
+
+function confirmRemoveSlot(slotId: string, sitterName: string) {
+  openConfirm(
+    `Retirer ${sitterName} de ce jour ?`,
+    'Cette personne ne sera plus prévue pour nourrir Malta ce jour-là.',
+    () => adminStore.removeSlot(slotId)
+  );
+}
+
+function confirmLockDate(isoDate: string) {
+  const sitterCount = (adminStore.slotsByDate[isoDate] ?? []).length;
+  const description = sitterCount > 1
+    ? 'Plusieurs personnes sont encore sur ce jour. Le verrouillage n\'en retirera aucune, mais plus personne ne pourra modifier la dispo.'
+    : 'Plus personne ne pourra s\'ajouter ni se retirer de ce jour.';
+
+  openConfirm(
+    'Verrouiller ce jour ?',
+    description,
+    () => adminStore.lockDate(isoDate)
+  );
+}
+
+function onRemoveSlot(slotId: string) {
+  const slot = adminStore.slots.find(item => item.id === slotId);
+  if (!slot) {
+    return;
+  }
+
+  const sitterName = adminStore.sitters.find(item => item.id === slot.sitter_id)?.name ?? 'cette personne';
+  confirmRemoveSlot(slotId, sitterName);
+}
+
+function onLockDate(isoDate: string) {
+  confirmLockDate(isoDate);
+}
 </script>
 
 <template>
@@ -149,6 +185,17 @@ function confirmDeleteSitter(sitterId: string, name: string) {
       color="error"
       variant="subtle"
       :title="adminStore.error"
+    />
+
+    <AdminCalendar
+      :sitters="adminStore.sitters"
+      :slots="adminStore.slots"
+      :slots-by-date="adminStore.slotsByDate"
+      :locked-dates="[...adminStore.lockedDateSet]"
+      :loading="adminStore.loading"
+      @remove-slot="onRemoveSlot"
+      @lock-date="onLockDate"
+      @unlock-date="(isoDate) => adminStore.unlockDate(isoDate)"
     />
 
     <section class="space-y-3 rounded-3xl border border-default bg-default/80 p-4">

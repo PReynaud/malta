@@ -8,7 +8,9 @@ import {
   dayEmoji,
   groupSlotsByDate,
   HAPPY_CAT_ISO,
+  isFeedDateAdminLocked,
   isFeedDateLocked,
+  isFeedDateReadOnly,
   isLightHex,
   isUncoveredDate,
   monthTitle,
@@ -87,6 +89,22 @@ describe('calendar', () => {
     expect(dayAriaLabel('2026-09-04', ['Pierre'], true)).toBe(
       'vendredi 4 septembre 2026, journée close, nourri par Pierre'
     );
+    expect(dayAriaLabel('2026-09-04', ['Pierre'], false, true)).toBe(
+      'vendredi 4 septembre 2026, journée verrouillée, nourri par Pierre'
+    );
+    expect(dayAriaLabel('2026-09-04', [], false, true)).toBe(
+      'vendredi 4 septembre 2026, journée verrouillée, personne n\'est prévu'
+    );
+  });
+
+  it('detects admin-locked and read-only feeding days', () => {
+    const locked = ['2026-09-14'];
+
+    expect(isFeedDateAdminLocked('2026-09-14', locked)).toBe(true);
+    expect(isFeedDateAdminLocked('2026-09-15', locked)).toBe(false);
+    expect(isFeedDateReadOnly('2026-09-14', locked, '2026-09-13')).toBe(true);
+    expect(isFeedDateReadOnly('2026-09-15', locked, '2026-09-13')).toBe(false);
+    expect(isFeedDateReadOnly('2026-09-13', locked, '2026-09-14')).toBe(true);
   });
 
   it('locks a feeding day after Paris midnight, not during the day', () => {

@@ -165,4 +165,96 @@ test.describe('admin dashboard', () => {
     await expect(page).toHaveURL(/\/admin\/login/);
     await expect(page.getByRole('button', { name: 'S\'inscrire' })).toHaveCount(0);
   });
+
+  test('lets the admin remove extras, lock a day, and block public edits until unlock', async ({ page }, testInfo) => {
+    const suffix = `${testInfo.parallelIndex}-${testInfo.retry}-${testInfo.workerIndex}`;
+    const firstName = `LockA-${suffix}`;
+    const secondName = `LockB-${suffix}`;
+    const targetDay = '2026-09-14';
+    const dayLabel = /^dimanche 14 septembre 2026,/;
+
+    await page.goto('/');
+    await waitForNuxtHydration(page);
+
+    await page.getByPlaceholder('Tatie, voisin, cousin...').fill(firstName);
+    await page.getByRole('button', { name: 'Rejoindre l\'équipe' }).click();
+    await expect(page.getByText(`Tu es ${firstName}`)).toBeVisible();
+
+    const targetDayButton = page.getByRole('button', { name: dayLabel });
+    await targetDayButton.click();
+    await expect(targetDayButton).toContainText(firstName);
+
+    await page.evaluate(() => window.localStorage.removeItem('malta-sitter-id'));
+    await page.reload();
+    await waitForNuxtHydration(page);
+
+    await page.getByPlaceholder('Tatie, voisin, cousin...').fill(secondName);
+    await page.getByRole('button', { name: 'Rejoindre l\'équipe' }).click();
+    await expect(page.getByText(`Tu es ${secondName}`)).toBeVisible();
+
+    const sharedDay = page.getByRole('button', { name: dayLabel });
+    await sharedDay.click();
+    await expect(sharedDay).toContainText(firstName);
+    await expect(sharedDay).toContainText(secondName);
+
+    await page.goto('/admin/login');
+    await waitForNuxtHydration(page);
+
+    const admin = await ensureAdminE2EAccount();
+    const form = page.getByTestId('admin-login-form');
+    await form.getByLabel('E-mail').fill(admin.email);
+    await form.locator('input[name="password"]').fill(admin.password);
+    await form.getByRole('button', { name: 'Se connecter' }).click();
+    await expect(page).toHaveURL(/\/admin$/);
+
+    await page.getByTestId(`admin-calendar-day-${targetDay}`).click();
+    const panel = page.getByTestId('admin-day-panel');
+    await expect(panel).toBeVisible();
+    await expect(panel.getByText(firstName)).toBeVisible();
+    await expect(panel.getByText(secondName)).toBeVisible();
+
+    const secondSlot = panel.locator('[data-testid^="admin-day-slot-"]').filter({ hasText: secondName });
+    await secondSlot.getByRole('button', { name: 'Retirer' }).click();
+    await page.getByTestId('admin-confirm-delete').click();
+    await expect(panel.getByText(secondName)).toHaveCount(0);
+    await expect(panel.getByText(firstName)).toBeVisible();
+
+    await panel.getByTestId('admin-lock-day').click();
+    await page.getByTestId('admin-confirm-delete').click();
+    await expect(panel.getByText('Journée verrouillée pour tout le monde.')).toBeVisible();
+
+    await page.goto('/');
+    await waitForNuxtHydration(page);
+
+    const lockedDay = page.getByRole('button', { name: /journée verrouillée/ });
+    await expect(lockedDay).toContainText('Verrouillé');
+    await expect(lockedDay).toContainText(firstName);
+    await expect(lockedDay).toBeDisabled();
+
+    await page.evaluate(() => window.localStorage.removeItem('malta-sitter-id'));
+    await page.reload();
+    await waitForNuxtHydration(page);
+
+    await page.getByRole('button', { name: secondName, exact: true }).click();
+    await expect(page.getByText(`Tu es ${secondName}`)).toBeVisible();
+
+    const stillLockedDay = page.getByRole('button', { name: /journée verrouillée/ });
+    await expect(stillLockedDay).toBeDisabled();
+    await stillLockedDay.click({ force: true });
+    await expect(stillLockedDay).not.toContainText(secondName);
+
+    await page.goto('/admin');
+    await waitForNuxtHydration(page);
+
+    await page.getByTestId(`admin-calendar-day-${targetDay}`).click();
+    await page.getByTestId('admin-unlock-day').click();
+    await expect(page.getByTestId('admin-day-panel')).toContainText('Encore modifiable par les volontaires.');
+
+    await page.goto('/');
+    await waitForNuxtHydration(page);
+
+    const unlockedDay = page.getByRole('button', { name: dayLabel });
+    await expect(unlockedDay).toBeEnabled();
+    await expect(unlockedDay).not.toContainText('Verrouillé');
+  });
 });

@@ -2,11 +2,12 @@ import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import { useSupabaseClient } from '#imports';
 import { getErrorMessage } from '@/utils/error-message';
-import { groupSlotsByDate, isFeedDateLocked, needsSitter } from '@/utils/calendar';
+import { groupSlotsByDate, isFeedDateAdminLocked, isFeedDateLocked, needsSitter } from '@/utils/calendar';
 import type { Database } from '@/types/database.types';
 
 export type Sitter = Database['public']['Tables']['sitters']['Row'];
 export type FeedingSlot = Database['public']['Tables']['feeding_slots']['Row'];
+export type LockedFeedDate = Database['public']['Tables']['locked_feed_dates']['Row'];
 
 const SELECTED_SITTER_KEY = 'malta-sitter-id';
 
@@ -35,6 +36,7 @@ export const useSittersStore = defineStore('sitters', () => {
 
   const sitters = ref<Sitter[]>([]);
   const slots = ref<FeedingSlot[]>([]);
+  const lockedDates = ref<LockedFeedDate[]>([]);
   const selectedSitterId = ref<string | null>(null);
   const loading = ref(false);
   const error = ref<string | null>(null);
@@ -44,6 +46,7 @@ export const useSittersStore = defineStore('sitters', () => {
   );
 
   const slotsByDate = computed(() => groupSlotsByDate(slots.value));
+  const lockedDateSet = computed(() => new Set(lockedDates.value.map(row => row.feed_date)));
   const profileLocked = computed(() => Boolean(selectedSitter.value));
 
   let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -84,9 +87,10 @@ export const useSittersStore = defineStore('sitters', () => {
     }
 
     try {
-      const [sittersResult, slotsResult] = await Promise.all([
+      const [sittersResult, slotsResult, lockedResult] = await Promise.all([
         supabase.from('sitters').select('*').order('created_at', { ascending: true }),
-        supabase.from('feeding_slots').select('*')
+        supabase.from('feeding_slots').select('*'),
+        supabase.from('locked_feed_dates').select('*')
       ]);
 
       if (sittersResult.error) {
@@ -97,8 +101,13 @@ export const useSittersStore = defineStore('sitters', () => {
         throw slotsResult.error;
       }
 
+      if (lockedResult.error) {
+        throw lockedResult.error;
+      }
+
       sitters.value = sittersResult.data ?? [];
       slots.value = slotsResult.data ?? [];
+      lockedDates.value = lockedResult.data ?? [];
 
       const stored = readSelectedSitterId();
       if (stored && sitters.value.some(sitter => sitter.id === stored)) {
@@ -220,6 +229,12 @@ export const useSittersStore = defineStore('sitters', () => {
       return { error: errorMessage };
     }
 
+    if (isFeedDateAdminLocked(isoDate, lockedDateSet.value)) {
+      const errorMessage = 'Ce jour est verrouillé : plus d\'ajout ni de retrait.';
+      error.value = errorMessage;
+      return { error: errorMessage };
+    }
+
     loading.value = true;
     error.value = null;
     const sitterId = selectedSitterId.value;
@@ -297,6 +312,30 @@ export const useSittersStore = defineStore('sitters', () => {
     }
   };
 
+  const applyLockedDateChange = (eventType: string, nextRow: unknown, oldRow: unknown) => {
+    if (eventType === 'INSERT' || eventType === 'UPDATE') {
+      const row = nextRow as LockedFeedDate | null;
+      if (row?.feed_date) {
+        const index = lockedDates.value.findIndex(item => item.feed_date === row.feed_date);
+        if (index === -1) {
+          lockedDates.value = [...lockedDates.value, row];
+        } else {
+          const next = [...lockedDates.value];
+          next[index] = row;
+          lockedDates.value = next;
+        }
+      }
+      return;
+    }
+
+    if (eventType === 'DELETE') {
+      const row = oldRow as LockedFeedDate | null;
+      if (row?.feed_date) {
+        lockedDates.value = lockedDates.value.filter(item => item.feed_date !== row.feed_date);
+      }
+    }
+  };
+
   const onVisibility = () => {
     if (document.visibilityState === 'visible') {
       void fetchAll({ silent: true });
@@ -324,6 +363,13 @@ export const useSittersStore = defineStore('sitters', () => {
           applySlotChange(payload.eventType, payload.new, payload.old);
         }
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'locked_feed_dates' },
+        (payload) => {
+          applyLockedDateChange(payload.eventType, payload.new, payload.old);
+        }
+      )
       .subscribe();
 
     document.addEventListener('visibilitychange', onVisibility);
@@ -343,6 +389,8 @@ export const useSittersStore = defineStore('sitters', () => {
   return {
     sitters,
     slots,
+    lockedDates,
+    lockedDateSet,
     selectedSitterId,
     selectedSitter,
     slotsByDate,
