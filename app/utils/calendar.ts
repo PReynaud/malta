@@ -188,6 +188,18 @@ export function isFeedDateLocked(isoDate: string, today = parisToday()): boolean
   return isoDate < today;
 }
 
+export function isFeedDateAdminLocked(isoDate: string, lockedDates: ReadonlySet<string> | readonly string[]): boolean {
+  return [...lockedDates].includes(isoDate);
+}
+
+export function isFeedDateReadOnly(
+  isoDate: string,
+  lockedDates: ReadonlySet<string> | readonly string[],
+  today = parisToday()
+): boolean {
+  return isFeedDateLocked(isoDate, today) || isFeedDateAdminLocked(isoDate, lockedDates);
+}
+
 export function isWeekend(isoDate: string): boolean {
   const weekday = new Date(`${isoDate}T00:00:00Z`).getUTCDay();
   return weekday === 0 || weekday === 6;
@@ -209,7 +221,8 @@ export function isLightHex(color: string): boolean {
 export function dayAriaLabel(
   isoDate: string,
   sitterNames: string[],
-  locked = false
+  pastLocked = false,
+  adminLocked = false
 ): string {
   const readable = formatDayLabel(isoDate);
 
@@ -225,12 +238,20 @@ export function dayAriaLabel(
     return readable;
   }
 
-  if (locked) {
+  if (pastLocked) {
     if (sitterNames.length === 0) {
       return `${readable}, journée close, personne n'était prévu`;
     }
 
     return `${readable}, journée close, nourri par ${sitterNames.join(', ')}`;
+  }
+
+  if (adminLocked) {
+    if (sitterNames.length === 0) {
+      return `${readable}, journée verrouillée, personne n'est prévu`;
+    }
+
+    return `${readable}, journée verrouillée, nourri par ${sitterNames.join(', ')}`;
   }
 
   if (sitterNames.length === 0) {

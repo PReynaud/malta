@@ -3,11 +3,11 @@ import { computed, ref } from 'vue';
 import { useSupabaseClient } from '#imports';
 import { getErrorMessage, isUnauthorizedError } from '@/utils/error-message';
 import { nextBonusPatounes, nextMalusPatounes } from '@/utils/admin';
-import { groupSlotsByDate } from '@/utils/calendar';
+import { groupSlotsByDate, isFeedDateAdminLocked, needsSitter } from '@/utils/calendar';
 import { rankSitters } from '@/utils/patounes';
 import type { Database } from '@/types/database.types';
 import type { MaltaGalleryItem, MaltaPhoto } from '@/stores/malta-photos';
-import type { FeedingSlot, Sitter } from '@/stores/sitters';
+import type { FeedingSlot, LockedFeedDate, Sitter } from '@/stores/sitters';
 
 const BUCKET = 'malta-photos';
 
@@ -17,10 +17,12 @@ export const useAdminStore = defineStore('admin', () => {
   const sitters = ref<Sitter[]>([]);
   const photos = ref<MaltaPhoto[]>([]);
   const slots = ref<FeedingSlot[]>([]);
+  const lockedDates = ref<LockedFeedDate[]>([]);
   const loading = ref(false);
   const error = ref<string | null>(null);
 
   const slotsByDate = computed(() => groupSlotsByDate(slots.value));
+  const lockedDateSet = computed(() => new Set(lockedDates.value.map(row => row.feed_date)));
 
   const photoCounts = computed(() => {
     const counts: Record<string, number> = {};
@@ -63,7 +65,8 @@ export const useAdminStore = defineStore('admin', () => {
   const queryAll = () => Promise.all([
     supabase.from('sitters').select('*').order('name', { ascending: true }),
     supabase.from('malta_photos').select('*').order('created_at', { ascending: false }),
-    supabase.from('feeding_slots').select('*')
+    supabase.from('feeding_slots').select('*'),
+    supabase.from('locked_feed_dates').select('*')
   ]);
 
   const fetchAll = async () => {
@@ -72,15 +75,16 @@ export const useAdminStore = defineStore('admin', () => {
 
     try {
       await supabase.auth.getSession();
-      let [sittersResult, photosResult, slotsResult] = await queryAll();
+      let [sittersResult, photosResult, slotsResult, lockedResult] = await queryAll();
 
       if (
         isUnauthorizedError(sittersResult.error)
         || isUnauthorizedError(photosResult.error)
         || isUnauthorizedError(slotsResult.error)
+        || isUnauthorizedError(lockedResult.error)
       ) {
         await supabase.auth.refreshSession();
-        [sittersResult, photosResult, slotsResult] = await queryAll();
+        [sittersResult, photosResult, slotsResult, lockedResult] = await queryAll();
       }
 
       if (sittersResult.data) {
@@ -95,7 +99,14 @@ export const useAdminStore = defineStore('admin', () => {
         slots.value = slotsResult.data;
       }
 
-      const firstError = sittersResult.error || photosResult.error || slotsResult.error;
+      if (lockedResult.data) {
+        lockedDates.value = lockedResult.data;
+      }
+
+      const firstError = sittersResult.error
+        || photosResult.error
+        || slotsResult.error
+        || lockedResult.error;
       if (firstError) {
         throw firstError;
       }
@@ -225,6 +236,106 @@ export const useAdminStore = defineStore('admin', () => {
     }
   };
 
+  const removeSlot = async (slotId: string) => {
+    const slot = slots.value.find(item => item.id === slotId);
+    if (!slot) {
+      const errorMessage = 'Créneau introuvable.';
+      error.value = errorMessage;
+      return { error: errorMessage };
+    }
+
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const { error: deleteError } = await supabase
+        .from('feeding_slots')
+        .delete()
+        .eq('id', slotId);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      slots.value = slots.value.filter(item => item.id !== slotId);
+      return { error: null };
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err, 'Impossible de retirer cette personne');
+      error.value = errorMessage;
+      return { error: errorMessage };
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const lockDate = async (feedDate: string) => {
+    if (!needsSitter(feedDate)) {
+      const errorMessage = 'Ce jour ne peut pas être verrouillé.';
+      error.value = errorMessage;
+      return { data: null, error: errorMessage };
+    }
+
+    if (isFeedDateAdminLocked(feedDate, lockedDateSet.value)) {
+      return {
+        data: lockedDates.value.find(item => item.feed_date === feedDate) ?? null,
+        error: null
+      };
+    }
+
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const { data, error: insertError } = await supabase
+        .from('locked_feed_dates')
+        .insert({ feed_date: feedDate })
+        .select()
+        .single();
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      lockedDates.value = [...lockedDates.value, data];
+      return { data, error: null };
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err, 'Impossible de verrouiller ce jour');
+      error.value = errorMessage;
+      return { data: null, error: errorMessage };
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const unlockDate = async (feedDate: string) => {
+    if (!isFeedDateAdminLocked(feedDate, lockedDateSet.value)) {
+      return { error: null };
+    }
+
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const { error: deleteError } = await supabase
+        .from('locked_feed_dates')
+        .delete()
+        .eq('feed_date', feedDate);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      lockedDates.value = lockedDates.value.filter(item => item.feed_date !== feedDate);
+      return { error: null };
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err, 'Impossible de déverrouiller ce jour');
+      error.value = errorMessage;
+      return { error: errorMessage };
+    } finally {
+      loading.value = false;
+    }
+  };
+
   const deleteSitter = async (sitterId: string) => {
     const sitter = sitters.value.find(item => item.id === sitterId);
     if (!sitter) {
@@ -273,6 +384,8 @@ export const useAdminStore = defineStore('admin', () => {
     sitters,
     photos,
     slots,
+    lockedDates,
+    lockedDateSet,
     loading,
     error,
     slotsByDate,
@@ -283,6 +396,9 @@ export const useAdminStore = defineStore('admin', () => {
     adjustBonus,
     adjustMalus,
     deletePhoto,
+    removeSlot,
+    lockDate,
+    unlockDate,
     deleteSitter
   };
 });

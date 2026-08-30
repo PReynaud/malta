@@ -108,6 +108,7 @@ async function onUploadPhoto(payload: { file: File; clientX: number; clientY: nu
       <MonthCalendar
         :sitters="store.sitters"
         :slots-by-date="store.slotsByDate"
+        :locked-dates="[...store.lockedDateSet]"
         :selected-sitter-id="store.selectedSitterId"
         :loading="store.loading"
         @select-date="onSelectDate"
