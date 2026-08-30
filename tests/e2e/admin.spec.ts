@@ -171,7 +171,7 @@ test.describe('admin dashboard', () => {
     const firstName = `LockA-${suffix}`;
     const secondName = `LockB-${suffix}`;
     const targetDay = '2026-09-14';
-    const dayLabel = /^dimanche 14 septembre 2026,/;
+    const dayLabel = /^lundi 14 septembre 2026,/;
 
     await page.goto('/');
     await waitForNuxtHydration(page);
