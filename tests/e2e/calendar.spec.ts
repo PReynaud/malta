@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { waitForNuxtHydration } from './helpers/wait-for-hydration';
+import { SELECTED_SITTER_KEY } from '../../app/utils/sitter-session';
 
 test('a sitter can join, claim a hungry day, then leave it', async ({ page }, testInfo) => {
   await page.goto('/');
@@ -53,6 +54,12 @@ test('owner-covered days are not claimable, and the profile stays locked', async
   await expect(page.getByText(`Tu es ${renamed}`)).toBeVisible();
 
   await page.getByRole('button', { name: 'Se déconnecter' }).click();
+  await expect(page.getByRole('heading', { name: 'Qui es-tu ?' })).toBeVisible();
+  await expect(page.getByRole('button', { name: renamed, exact: true })).toBeVisible();
+  expect(await page.evaluate(key => window.localStorage.getItem(key), SELECTED_SITTER_KEY)).toBeNull();
+
+  await page.reload();
+  await waitForNuxtHydration(page);
   await expect(page.getByRole('heading', { name: 'Qui es-tu ?' })).toBeVisible();
   await expect(page.getByRole('button', { name: renamed, exact: true })).toBeVisible();
 

@@ -73,6 +73,7 @@ export const useSittersStore = defineStore('sitters', () => {
   };
 
   const clearSelectedSitter = () => {
+    error.value = null;
     selectedSitterId.value = null;
     writeSelectedSitterId(clientStorage(), null);
   };
@@ -109,8 +110,11 @@ export const useSittersStore = defineStore('sitters', () => {
       const stored = readSelectedSitterId(clientStorage());
       if (stored && sitters.value.some(sitter => sitter.id === stored)) {
         selectedSitterId.value = stored;
-      } else if (stored) {
-        writeSelectedSitterId(clientStorage(), null);
+      } else {
+        if (stored) {
+          writeSelectedSitterId(clientStorage(), null);
+        }
+
         selectedSitterId.value = null;
       }
 

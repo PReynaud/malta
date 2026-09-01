@@ -71,7 +71,7 @@ describe('sitters store wiring', () => {
   });
 
   it('keeps the lock legend but uses an icon-only badge on locked days', () => {
-    expect(calendar).toContain('Verrouillé');
+    expect(calendar).toMatch(/bg-primary\/20 ring-1 ring-primary\/50[\s\S]*\n\s*Verrouillé/);
     const badge = calendar.match(
       /v-else-if="isAdminLocked\(cell\.isoDate\)"[\s\S]*?<\/span>\s*<\/span>/
     )?.[0];

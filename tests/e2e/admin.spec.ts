@@ -229,6 +229,7 @@ test.describe('admin dashboard', () => {
     const lockedDay = page.getByRole('button', { name: /journée verrouillée/ });
     await expect(lockedDay).toContainText('🔒');
     await expect(lockedDay).not.toContainText('Verrouillé');
+    await expect(page.getByText('Verrouillé', { exact: true })).toBeVisible();
     await expect(lockedDay).toContainText(firstName);
     await expect(lockedDay).toBeDisabled();
 
