@@ -170,10 +170,10 @@ function sitterInitial(name: string): string {
             </span>
             <span
               v-else-if="isAdminLocked(cell.isoDate)"
-              class="inline-flex items-center gap-0.5 rounded-full bg-primary/15 px-1 py-px text-[9px] font-semibold uppercase tracking-wide text-primary sm:gap-1 sm:px-2 sm:py-0.5 sm:text-xs"
+              class="inline-flex items-center rounded-full bg-primary/15 px-1 py-px text-[11px] leading-none sm:px-1.5 sm:py-0.5 sm:text-sm"
+              title="Verrouillé"
             >
               <span aria-hidden="true">🔒</span>
-              Verrouillé
             </span>
             <span
               v-else-if="isUncoveredDate(cell.isoDate, slotsByDate)"

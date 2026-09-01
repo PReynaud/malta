@@ -103,6 +103,7 @@ async function onUploadPhoto(payload: { file: File; clientX: number; clientY: nu
         @select="store.selectSitter"
         @create="({ name, color }) => store.createSitter(name, color)"
         @update="({ name, color }) => store.updateSelectedSitter(name, color)"
+        @logout="store.clearSelectedSitter"
       />
 
       <MonthCalendar

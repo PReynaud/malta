@@ -227,7 +227,8 @@ test.describe('admin dashboard', () => {
     await waitForNuxtHydration(page);
 
     const lockedDay = page.getByRole('button', { name: /journée verrouillée/ });
-    await expect(lockedDay).toContainText('Verrouillé');
+    await expect(lockedDay).toContainText('🔒');
+    await expect(lockedDay).not.toContainText('Verrouillé');
     await expect(lockedDay).toContainText(firstName);
     await expect(lockedDay).toBeDisabled();
 

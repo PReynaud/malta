@@ -51,6 +51,22 @@ test('owner-covered days are not claimable, and the profile stays locked', async
   await page.getByPlaceholder('Tatie, voisin, cousin...').fill(renamed);
   await page.getByRole('button', { name: 'Enregistrer' }).click();
   await expect(page.getByText(`Tu es ${renamed}`)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Se déconnecter' }).click();
+  await expect(page.getByRole('heading', { name: 'Qui es-tu ?' })).toBeVisible();
+  await expect(page.getByRole('button', { name: renamed, exact: true })).toBeVisible();
+
+  const otherName = `Autre-${testInfo.parallelIndex}-${testInfo.retry}`;
+  await page.getByPlaceholder('Tatie, voisin, cousin...').fill(otherName);
+  await page.getByRole('button', { name: 'Rejoindre l\'équipe' }).click();
+  await expect(page.getByText(`Tu es ${otherName}`)).toBeVisible();
+  await expect(page.getByRole('button', { name: renamed, exact: true })).toHaveCount(0);
+
+  await page.getByRole('heading', { name: 'Ton profil' }).click();
+  await page.getByRole('button', { name: 'Se déconnecter' }).click();
+  await page.getByRole('button', { name: renamed, exact: true }).click();
+  await expect(page.getByText(`Tu es ${renamed}`)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Ton profil' })).toBeVisible();
 });
 
 test.describe('mobile calendar', () => {

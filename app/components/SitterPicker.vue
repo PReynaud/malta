@@ -14,6 +14,7 @@ const emit = defineEmits<{
   select: [id: string];
   create: [payload: { name: string; color: string }];
   update: [payload: { name: string; color: string }];
+  logout: [];
 }>();
 
 const name = ref('');
@@ -29,7 +30,11 @@ watch(
     if (sitter) {
       name.value = sitter.name;
       color.value = sitter.color;
+      return;
     }
+
+    name.value = '';
+    color.value = PRESET_COLORS[0];
   },
   { immediate: true }
 );
@@ -103,7 +108,7 @@ function submit() {
           v-if="locked"
           class="text-sm text-muted"
         >
-          Tu peux changer ton nom ou ta couleur. Plus question de passer sur le profil d'un autre.
+          Tu peux changer ton nom ou ta couleur. Pour passer sur un autre profil, déconnecte-toi.
         </p>
 
         <div
@@ -190,6 +195,17 @@ function submit() {
             {{ locked ? 'Enregistrer' : 'Rejoindre l\'équipe' }}
           </button>
         </form>
+
+        <UButton
+          v-if="locked"
+          color="neutral"
+          variant="ghost"
+          size="lg"
+          class="w-full touch-manipulation sm:w-auto"
+          label="Se déconnecter"
+          :disabled="loading"
+          @click="emit('logout')"
+        />
       </div>
     </details>
   </section>
