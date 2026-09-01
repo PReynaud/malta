@@ -3,32 +3,23 @@ import { computed, ref } from 'vue';
 import { useSupabaseClient } from '#imports';
 import { getErrorMessage } from '@/utils/error-message';
 import { groupSlotsByDate, isFeedDateAdminLocked, isFeedDateLocked, needsSitter } from '@/utils/calendar';
+import {
+  nextSelectedSitterId,
+  readSelectedSitterId,
+  writeSelectedSitterId
+} from '@/utils/sitter-session';
 import type { Database } from '@/types/database.types';
 
 export type Sitter = Database['public']['Tables']['sitters']['Row'];
 export type FeedingSlot = Database['public']['Tables']['feeding_slots']['Row'];
 export type LockedFeedDate = Database['public']['Tables']['locked_feed_dates']['Row'];
 
-const SELECTED_SITTER_KEY = 'malta-sitter-id';
-
-function readSelectedSitterId(): string | null {
+function clientStorage(): Storage | null {
   if (!import.meta.client) {
     return null;
   }
 
-  return window.localStorage.getItem(SELECTED_SITTER_KEY);
-}
-
-function writeSelectedSitterId(id: string | null): void {
-  if (!import.meta.client) {
-    return;
-  }
-
-  if (id) {
-    window.localStorage.setItem(SELECTED_SITTER_KEY, id);
-  } else {
-    window.localStorage.removeItem(SELECTED_SITTER_KEY);
-  }
+  return window.localStorage;
 }
 
 export const useSittersStore = defineStore('sitters', () => {
@@ -72,12 +63,19 @@ export const useSittersStore = defineStore('sitters', () => {
   }
 
   const selectSitter = (id: string) => {
-    if (selectedSitterId.value && selectedSitterId.value !== id) {
+    const nextId = nextSelectedSitterId(selectedSitterId.value, id);
+    if (nextId !== id) {
       return;
     }
 
     selectedSitterId.value = id;
-    writeSelectedSitterId(id);
+    writeSelectedSitterId(clientStorage(), id);
+  };
+
+  const clearSelectedSitter = () => {
+    error.value = null;
+    selectedSitterId.value = null;
+    writeSelectedSitterId(clientStorage(), null);
   };
 
   const fetchAll = async (options: { silent?: boolean } = {}) => {
@@ -109,11 +107,14 @@ export const useSittersStore = defineStore('sitters', () => {
       slots.value = slotsResult.data ?? [];
       lockedDates.value = lockedResult.data ?? [];
 
-      const stored = readSelectedSitterId();
+      const stored = readSelectedSitterId(clientStorage());
       if (stored && sitters.value.some(sitter => sitter.id === stored)) {
         selectedSitterId.value = stored;
-      } else if (stored) {
-        writeSelectedSitterId(null);
+      } else {
+        if (stored) {
+          writeSelectedSitterId(clientStorage(), null);
+        }
+
         selectedSitterId.value = null;
       }
 
@@ -398,6 +399,7 @@ export const useSittersStore = defineStore('sitters', () => {
     loading,
     error,
     selectSitter,
+    clearSelectedSitter,
     fetchAll,
     createSitter,
     updateSelectedSitter,
