@@ -1,5 +1,10 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
+import {
+  adjacentPhotoIndex,
+  formatMaltaPhotoPublishedAt,
+  swipeNavigationDelta
+} from '@/utils/malta-photo-display';
 import { needsMarqueeLoop } from '@/utils/marquee';
 import { PATOUNE_PHOTO } from '@/utils/patounes';
 import type { MaltaGalleryItem } from '@/stores/malta-photos';
@@ -16,16 +21,53 @@ const emit = defineEmits<{
   upload: [payload: { file: File; clientX: number; clientY: number }];
 }>();
 
+const SWIPE_THRESHOLD_PX = 45;
+
 const lastClick = ref({ x: 0, y: 0 });
-const selectedPhoto = ref<MaltaGalleryItem | null>(null);
+const selectedIndex = ref<number | null>(null);
+const selectedPhotoId = ref<string | null>(null);
 const maskEl = ref<HTMLElement | null>(null);
 const contentEl = ref<HTMLElement | null>(null);
 const looping = ref(false);
+const touchStart = ref<{ x: number; y: number; id: number } | null>(null);
+const suppressLightboxClick = ref(false);
+
+const selectedPhoto = computed(() => {
+  if (selectedIndex.value === null) {
+    return null;
+  }
+  return props.photos[selectedIndex.value] ?? null;
+});
+
+const canNavigate = computed(() => props.photos.length > 1);
+
+const selectedAuthorLabel = computed(() => {
+  const photo = selectedPhoto.value;
+  if (!photo) {
+    return '';
+  }
+  return photoAuthor(photo);
+});
+
+const selectedPublishedAt = computed(() => {
+  const photo = selectedPhoto.value;
+  if (!photo?.created_at) {
+    return '';
+  }
+  return formatMaltaPhotoPublishedAt(photo.created_at) ?? '';
+});
+
+function isScrollStripMode(): boolean {
+  if (!import.meta.client) {
+    return false;
+  }
+  return window.matchMedia('(max-width: 639px), (pointer: coarse)').matches;
+}
 
 function updateLooping() {
   const mask = maskEl.value;
   const content = contentEl.value;
-  if (!import.meta.client || !mask || !content) {
+  if (!import.meta.client || !mask || !content || isScrollStripMode()) {
     looping.value = false;
     return;
   }
@@ -47,13 +89,35 @@ watch(
     observer.observe(content);
     updateLooping();
 
-    onCleanup(() => observer.disconnect());
+    const mediaQuery = window.matchMedia('(max-width: 639px), (pointer: coarse)');
+    const onMediaChange = () => updateLooping();
+    mediaQuery.addEventListener('change', onMediaChange);
+
+    onCleanup(() => {
+      observer.disconnect();
+      mediaQuery.removeEventListener('change', onMediaChange);
+    });
   }
 );
 
 watch(
   () => props.photos.map(photo => photo.id).join(),
   async () => {
+    if (selectedPhotoId.value !== null) {
+      const nextIndex = props.photos.findIndex(photo => photo.id === selectedPhotoId.value);
+      if (nextIndex >= 0) {
+        selectedIndex.value = nextIndex;
+      } else if (props.photos.length === 0) {
+        selectedIndex.value = null;
+        selectedPhotoId.value = null;
+      } else {
+        selectedIndex.value = Math.min(
+          selectedIndex.value ?? 0,
+          props.photos.length - 1
+        );
+        selectedPhotoId.value = props.photos[selectedIndex.value]?.id ?? null;
+      }
+    }
     await nextTick();
     updateLooping();
   }
@@ -98,33 +162,116 @@ function photoAlt(photo: MaltaGalleryItem): string {
   return sitterName ? `Photo de Malta par ${sitterName}` : 'Photo de Malta';
 }
 
+function photoAuthor(photo: MaltaGalleryItem): string {
+  const sitterName = sitterById.value[photo.sitter_id]?.name;
+  return sitterName ? `Par ${sitterName}` : 'Par un sitter inconnu';
+}
+
 function openPhoto(photo: MaltaGalleryItem) {
-  selectedPhoto.value = photo;
+  const index = props.photos.findIndex(item => item.id === photo.id);
+  selectedIndex.value = index >= 0 ? index : null;
+  selectedPhotoId.value = index >= 0 ? photo.id : null;
 }
 
 function closePhoto() {
-  selectedPhoto.value = null;
+  selectedIndex.value = null;
+  selectedPhotoId.value = null;
+  touchStart.value = null;
+}
+
+function goAdjacent(delta: number) {
+  if (!canNavigate.value || selectedIndex.value === null) {
+    return;
+  }
+  selectedIndex.value = adjacentPhotoIndex(selectedIndex.value, props.photos.length, delta);
+  selectedPhotoId.value = props.photos[selectedIndex.value]?.id ?? null;
 }
 
 function onLightboxKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     closePhoto();
+    return;
+  }
+
+  if (event.key === 'ArrowLeft') {
+    event.preventDefault();
+    goAdjacent(-1);
+    return;
+  }
+
+  if (event.key === 'ArrowRight') {
+    event.preventDefault();
+    goAdjacent(1);
   }
 }
 
-watch(selectedPhoto, (photo) => {
+function onLightboxTouchStart(event: TouchEvent) {
+  const touch = event.touches[0];
+  if (!touch) {
+    return;
+  }
+  touchStart.value = { x: touch.clientX, y: touch.clientY, id: touch.identifier };
+}
+
+function onLightboxTouchCancel() {
+  touchStart.value = null;
+}
+
+function onLightboxTouchEnd(event: TouchEvent) {
+  const start = touchStart.value;
+  touchStart.value = null;
+
+  if (!start || !canNavigate.value) {
+    return;
+  }
+
+  const touch = Array.from(event.changedTouches).find(item => item.identifier === start.id);
+  if (!touch) {
+    return;
+  }
+
+  const delta = swipeNavigationDelta(
+    start.x,
+    start.y,
+    touch.clientX,
+    touch.clientY,
+    SWIPE_THRESHOLD_PX
+  );
+
+  if (delta === 0) {
+    return;
+  }
+
+  suppressLightboxClick.value = true;
+  goAdjacent(delta);
+}
+
+function onLightboxBackdropClick() {
+  if (suppressLightboxClick.value) {
+    suppressLightboxClick.value = false;
+    return;
+  }
+  closePhoto();
+}
+
+watch(selectedIndex, (index, previous) => {
   if (!import.meta.client) {
     return;
   }
 
-  if (photo) {
+  const isOpen = index !== null;
+  const wasOpen = previous !== null && previous !== undefined;
+
+  if (isOpen && !wasOpen) {
     document.addEventListener('keydown', onLightboxKeydown);
     document.body.style.overflow = 'hidden';
     return;
   }
 
-  document.removeEventListener('keydown', onLightboxKeydown);
-  document.body.style.overflow = '';
+  if (!isOpen && wasOpen) {
+    document.removeEventListener('keydown', onLightboxKeydown);
+    document.body.style.overflow = '';
+  }
 });
 
 onUnmounted(() => {
@@ -235,29 +382,79 @@ onUnmounted(() => {
 
     <div
       v-if="selectedPhoto"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+      class="malta-photo-lightbox fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
       role="dialog"
       aria-modal="true"
       :aria-label="photoAlt(selectedPhoto)"
       data-testid="malta-photo-lightbox"
-      @click="closePhoto"
+      @click="onLightboxBackdropClick"
+      @touchstart.passive="onLightboxTouchStart"
+      @touchend="onLightboxTouchEnd"
+      @touchcancel="onLightboxTouchCancel"
     >
       <button
         type="button"
-        class="absolute right-3 top-3 rounded-full bg-black/50 px-3 py-1 text-sm font-semibold text-white touch-manipulation"
+        class="absolute right-3 top-3 z-10 rounded-full bg-black/50 px-3 py-1 text-sm font-semibold text-white touch-manipulation"
         aria-label="Fermer la photo agrandie"
         data-testid="malta-photo-lightbox-close"
         @click="closePhoto"
       >
         Fermer
       </button>
-      <img
-        :src="selectedPhoto.publicUrl"
-        :alt="photoAlt(selectedPhoto)"
-        class="max-h-[85vh] max-w-full rounded-2xl object-contain shadow-lg"
-        data-testid="malta-photo-lightbox-image"
+
+      <button
+        v-if="canNavigate"
+        type="button"
+        class="malta-photo-lightbox-nav malta-photo-lightbox-prev absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 px-3 py-2 text-lg font-semibold text-white touch-manipulation sm:left-4"
+        aria-label="Photo précédente"
+        data-testid="malta-photo-lightbox-prev"
+        @click.stop="goAdjacent(-1)"
+        @touchend.stop
+      >
+        ‹
+      </button>
+
+      <button
+        v-if="canNavigate"
+        type="button"
+        class="malta-photo-lightbox-nav malta-photo-lightbox-next absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 px-3 py-2 text-lg font-semibold text-white touch-manipulation sm:right-4"
+        aria-label="Photo suivante"
+        data-testid="malta-photo-lightbox-next"
+        @click.stop="goAdjacent(1)"
+        @touchend.stop
+      >
+        ›
+      </button>
+
+      <div
+        class="malta-photo-lightbox-stage flex max-h-full max-w-full flex-col items-center gap-3"
         @click.stop
       >
+        <img
+          :src="selectedPhoto.publicUrl"
+          :alt="photoAlt(selectedPhoto)"
+          class="max-h-[75vh] max-w-full rounded-2xl object-contain shadow-lg"
+          data-testid="malta-photo-lightbox-image"
+        >
+        <div
+          class="malta-photo-lightbox-caption text-center text-white"
+          data-testid="malta-photo-lightbox-caption"
+        >
+          <p
+            class="text-sm font-semibold sm:text-base"
+            data-testid="malta-photo-lightbox-author"
+          >
+            {{ selectedAuthorLabel }}
+          </p>
+          <p
+            v-if="selectedPublishedAt"
+            class="mt-0.5 text-xs text-white/80 sm:text-sm"
+            data-testid="malta-photo-lightbox-published"
+          >
+            {{ selectedPublishedAt }}
+          </p>
+        </div>
+      </div>
     </div>
   </section>
 </template>
