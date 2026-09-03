@@ -133,6 +133,28 @@ html.dark {
   transform: scale(1.03);
 }
 
+/* Mobile / coarse pointer: finger-scroll strip instead of CSS marquee */
+@media (max-width: 639px), (pointer: coarse) {
+  .malta-photo-marquee.malta-marquee-mask {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .malta-photo-marquee .malta-photo-track {
+    animation: none !important;
+    display: flex;
+    width: max-content;
+    justify-content: flex-start;
+  }
+
+  .malta-photo-marquee .malta-photo-frame-button {
+    scroll-snap-align: start;
+  }
+}
+
 .malta-mood-burst {
   animation: malta-mood-pop 0.9s ease-out forwards;
 }
