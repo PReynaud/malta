@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   adjacentPhotoIndex,
-  formatMaltaPhotoPublishedAt
+  formatMaltaPhotoPublishedAt,
+  swipeNavigationDelta
 } from '../../app/utils/malta-photo-display';
 
 describe('formatMaltaPhotoPublishedAt', () => {
@@ -20,8 +21,8 @@ describe('formatMaltaPhotoPublishedAt', () => {
     expect(formatted).toMatch(/15:22/);
   });
 
-  it('returns the raw input for invalid dates', () => {
-    expect(formatMaltaPhotoPublishedAt('not-a-date')).toBe('not-a-date');
+  it('returns null for invalid dates', () => {
+    expect(formatMaltaPhotoPublishedAt('not-a-date')).toBeNull();
   });
 });
 
@@ -43,5 +44,20 @@ describe('adjacentPhotoIndex', () => {
 
   it('returns 0 when the list is empty', () => {
     expect(adjacentPhotoIndex(0, 0, 1)).toBe(0);
+  });
+});
+
+describe('swipeNavigationDelta', () => {
+  it('returns next delta for a leftward swipe past threshold', () => {
+    expect(swipeNavigationDelta(100, 50, 40, 55, 45)).toBe(1);
+  });
+
+  it('returns previous delta for a rightward swipe past threshold', () => {
+    expect(swipeNavigationDelta(40, 50, 100, 55, 45)).toBe(-1);
+  });
+
+  it('ignores short or mostly vertical gestures', () => {
+    expect(swipeNavigationDelta(100, 50, 70, 55, 45)).toBe(0);
+    expect(swipeNavigationDelta(100, 50, 40, 120, 45)).toBe(0);
   });
 });

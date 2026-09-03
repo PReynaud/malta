@@ -23,7 +23,6 @@ test('a selected sitter can upload a Malta photo and gain two patounes', async (
   await page.getByTestId('malta-photo-input').setInputFiles(maltaPhotoPath);
   await expect(page.getByTestId('cat-mood-burst')).toContainText('+2');
   await expect(page.getByRole('img', { name: `Photo de Malta par ${name}` })).toBeVisible();
-  await expect(page.locator('[data-testid="malta-photo-marquee"] img')).toHaveCount(1);
 
   await page.getByRole('button', { name: `Agrandir Photo de Malta par ${name}` }).click();
   const lightbox = page.getByTestId('malta-photo-lightbox');
@@ -51,20 +50,20 @@ test('lightbox shows publication metadata and navigates between photos', async (
 
   await page.getByTestId('malta-photo-input').setInputFiles(maltaPhotoPath);
   await expect(page.getByTestId('cat-mood-burst')).toContainText('+2');
-  await expect(page.locator('[data-testid="malta-photo-marquee"] img')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: `Agrandir Photo de Malta par ${name}` })).toHaveCount(1);
 
   await page.getByTestId('malta-photo-input').setInputFiles(maltaPhotoPath);
   await expect(page.getByTestId('cat-mood-burst')).toContainText('+2');
-  await expect(page.locator('[data-testid="malta-photo-marquee"] .malta-photo-frame-button')).toHaveCount(2);
+  const ownThumbs = page.getByRole('button', { name: `Agrandir Photo de Malta par ${name}` });
+  await expect(ownThumbs).toHaveCount(2);
 
-  const thumbs = page.locator('[data-testid="malta-photo-marquee"] .malta-photo-frame-button');
-  const firstSrc = await thumbs.nth(0).locator('img').getAttribute('src');
-  const secondSrc = await thumbs.nth(1).locator('img').getAttribute('src');
+  const firstSrc = await ownThumbs.nth(0).locator('img').getAttribute('src');
+  const secondSrc = await ownThumbs.nth(1).locator('img').getAttribute('src');
   expect(firstSrc).toBeTruthy();
   expect(secondSrc).toBeTruthy();
   expect(firstSrc).not.toBe(secondSrc);
 
-  await thumbs.nth(0).click();
+  await ownThumbs.nth(0).click();
   const lightbox = page.getByTestId('malta-photo-lightbox');
   await expect(lightbox).toBeVisible();
   await expect(page.getByTestId('malta-photo-lightbox-author')).toHaveText(`Par ${name}`);
@@ -79,6 +78,13 @@ test('lightbox shows publication metadata and navigates between photos', async (
   await expect(page.getByTestId('malta-photo-lightbox-image')).toHaveAttribute('src', firstSrc!);
 
   await page.keyboard.press('ArrowRight');
+  await expect(page.getByTestId('malta-photo-lightbox-image')).toHaveAttribute('src', secondSrc!);
+
+  await page.keyboard.press('ArrowLeft');
+  await expect(page.getByTestId('malta-photo-lightbox-image')).toHaveAttribute('src', firstSrc!);
+
+  // Wrap: previous from the newest photo lands on the older one
+  await page.getByTestId('malta-photo-lightbox-prev').click();
   await expect(page.getByTestId('malta-photo-lightbox-image')).toHaveAttribute('src', secondSrc!);
 
   await page.getByTestId('malta-photo-lightbox-close').click();

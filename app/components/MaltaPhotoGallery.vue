@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
-import { adjacentPhotoIndex, formatMaltaPhotoPublishedAt } from '@/utils/malta-photo-display';
+import {
+  adjacentPhotoIndex,
+  formatMaltaPhotoPublishedAt,
+  swipeNavigationDelta
+} from '@/utils/malta-photo-display';
 import { needsMarqueeLoop } from '@/utils/marquee';
 import { PATOUNE_PHOTO } from '@/utils/patounes';
 import type { MaltaGalleryItem } from '@/stores/malta-photos';
@@ -21,10 +25,12 @@ const SWIPE_THRESHOLD_PX = 45;
 
 const lastClick = ref({ x: 0, y: 0 });
 const selectedIndex = ref<number | null>(null);
+const selectedPhotoId = ref<string | null>(null);
 const maskEl = ref<HTMLElement | null>(null);
 const contentEl = ref<HTMLElement | null>(null);
 const looping = ref(false);
-const touchStart = ref<{ x: number; y: number } | null>(null);
+const touchStart = ref<{ x: number; y: number; id: number } | null>(null);
+const suppressLightboxClick = ref(false);
 
 const selectedPhoto = computed(() => {
   if (selectedIndex.value === null) {
@@ -48,7 +54,7 @@ const selectedPublishedAt = computed(() => {
   if (!photo?.created_at) {
     return '';
   }
-  return formatMaltaPhotoPublishedAt(photo.created_at);
+  return formatMaltaPhotoPublishedAt(photo.created_at) ?? '';
 });
 
 function isScrollStripMode(): boolean {
@@ -97,11 +103,19 @@ watch(
 watch(
   () => props.photos.map(photo => photo.id).join(),
   async () => {
-    if (selectedIndex.value !== null) {
-      if (props.photos.length === 0) {
+    if (selectedPhotoId.value !== null) {
+      const nextIndex = props.photos.findIndex(photo => photo.id === selectedPhotoId.value);
+      if (nextIndex >= 0) {
+        selectedIndex.value = nextIndex;
+      } else if (props.photos.length === 0) {
         selectedIndex.value = null;
-      } else if (selectedIndex.value >= props.photos.length) {
-        selectedIndex.value = props.photos.length - 1;
+        selectedPhotoId.value = null;
+      } else {
+        selectedIndex.value = Math.min(
+          selectedIndex.value ?? 0,
+          props.photos.length - 1
+        );
+        selectedPhotoId.value = props.photos[selectedIndex.value]?.id ?? null;
       }
     }
     await nextTick();
@@ -156,10 +170,12 @@ function photoAuthor(photo: MaltaGalleryItem): string {
 function openPhoto(photo: MaltaGalleryItem) {
   const index = props.photos.findIndex(item => item.id === photo.id);
   selectedIndex.value = index >= 0 ? index : null;
+  selectedPhotoId.value = index >= 0 ? photo.id : null;
 }
 
 function closePhoto() {
   selectedIndex.value = null;
+  selectedPhotoId.value = null;
   touchStart.value = null;
 }
 
@@ -168,6 +184,7 @@ function goAdjacent(delta: number) {
     return;
   }
   selectedIndex.value = adjacentPhotoIndex(selectedIndex.value, props.photos.length, delta);
+  selectedPhotoId.value = props.photos[selectedIndex.value]?.id ?? null;
 }
 
 function onLightboxKeydown(event: KeyboardEvent) {
@@ -193,27 +210,48 @@ function onLightboxTouchStart(event: TouchEvent) {
   if (!touch) {
     return;
   }
-  touchStart.value = { x: touch.clientX, y: touch.clientY };
+  touchStart.value = { x: touch.clientX, y: touch.clientY, id: touch.identifier };
+}
+
+function onLightboxTouchCancel() {
+  touchStart.value = null;
 }
 
 function onLightboxTouchEnd(event: TouchEvent) {
   const start = touchStart.value;
-  const touch = event.changedTouches[0];
   touchStart.value = null;
 
-  if (!start || !touch || !canNavigate.value) {
+  if (!start || !canNavigate.value) {
     return;
   }
 
-  const dx = touch.clientX - start.x;
-  const dy = touch.clientY - start.y;
-
-  if (Math.abs(dx) < SWIPE_THRESHOLD_PX || Math.abs(dx) <= Math.abs(dy)) {
+  const touch = Array.from(event.changedTouches).find(item => item.identifier === start.id);
+  if (!touch) {
     return;
   }
 
-  // Swipe left → next (older / higher index); swipe right → previous
-  goAdjacent(dx < 0 ? 1 : -1);
+  const delta = swipeNavigationDelta(
+    start.x,
+    start.y,
+    touch.clientX,
+    touch.clientY,
+    SWIPE_THRESHOLD_PX
+  );
+
+  if (delta === 0) {
+    return;
+  }
+
+  suppressLightboxClick.value = true;
+  goAdjacent(delta);
+}
+
+function onLightboxBackdropClick() {
+  if (suppressLightboxClick.value) {
+    suppressLightboxClick.value = false;
+    return;
+  }
+  closePhoto();
 }
 
 watch(selectedIndex, (index, previous) => {
@@ -349,9 +387,10 @@ onUnmounted(() => {
       aria-modal="true"
       :aria-label="photoAlt(selectedPhoto)"
       data-testid="malta-photo-lightbox"
-      @click="closePhoto"
+      @click="onLightboxBackdropClick"
       @touchstart.passive="onLightboxTouchStart"
       @touchend="onLightboxTouchEnd"
+      @touchcancel="onLightboxTouchCancel"
     >
       <button
         type="button"
@@ -370,6 +409,7 @@ onUnmounted(() => {
         aria-label="Photo précédente"
         data-testid="malta-photo-lightbox-prev"
         @click.stop="goAdjacent(-1)"
+        @touchend.stop
       >
         ‹
       </button>
@@ -381,6 +421,7 @@ onUnmounted(() => {
         aria-label="Photo suivante"
         data-testid="malta-photo-lightbox-next"
         @click.stop="goAdjacent(1)"
+        @touchend.stop
       >
         ›
       </button>

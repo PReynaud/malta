@@ -146,8 +146,9 @@ html.dark {
   .malta-photo-marquee .malta-photo-track {
     animation: none !important;
     display: flex;
-    width: max-content;
-    justify-content: flex-start;
+    /* Override higher-specificity non-loop centering rules */
+    width: max-content !important;
+    justify-content: flex-start !important;
   }
 
   .malta-photo-marquee .malta-photo-frame-button {
