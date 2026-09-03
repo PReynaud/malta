@@ -83,9 +83,13 @@ test('lightbox shows publication metadata and navigates between photos', async (
   await page.keyboard.press('ArrowLeft');
   await expect(page.getByTestId('malta-photo-lightbox-image')).toHaveAttribute('src', firstSrc!);
 
-  // Wrap: previous from the newest photo lands on the older one
+  // Wrap: previous from the newest photo leaves this image, next returns to it.
+  // Other sitters' photos may exist in the shared gallery, so we do not assume
+  // the adjacent wrap target is always this sitter's second upload.
   await page.getByTestId('malta-photo-lightbox-prev').click();
-  await expect(page.getByTestId('malta-photo-lightbox-image')).toHaveAttribute('src', secondSrc!);
+  await expect(page.getByTestId('malta-photo-lightbox-image')).not.toHaveAttribute('src', firstSrc!);
+  await page.getByTestId('malta-photo-lightbox-next').click();
+  await expect(page.getByTestId('malta-photo-lightbox-image')).toHaveAttribute('src', firstSrc!);
 
   await page.getByTestId('malta-photo-lightbox-close').click();
   await expect(lightbox).toHaveCount(0);
