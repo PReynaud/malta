@@ -47,6 +47,7 @@ test('a sitter can join, claim a hungry day, then leave it', async ({ page }, te
 test('leaving a day still persists when another day is admin-locked', async ({ page }, testInfo) => {
   const lockedDay = nextOpenFeedDate(undefined, testInfo.parallelIndex + 2);
   const claimDay = nextOpenFeedDate(undefined, testInfo.parallelIndex);
+  expect(claimDay).not.toBe(lockedDay);
   await lockFeedDateForTest(lockedDay);
 
   try {
