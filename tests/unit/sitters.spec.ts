@@ -57,9 +57,14 @@ describe('sitter session', () => {
 
 describe('sitters store wiring', () => {
   const source = readFileSync(resolve(process.cwd(), 'app/stores/sitters.ts'), 'utf8');
+  const adminSource = readFileSync(resolve(process.cwd(), 'app/stores/admin.ts'), 'utf8');
   const picker = readFileSync(resolve(process.cwd(), 'app/components/SitterPicker.vue'), 'utf8');
   const calendar = readFileSync(resolve(process.cwd(), 'app/components/MonthCalendar.vue'), 'utf8');
   const home = readFileSync(resolve(process.cwd(), 'app/pages/index.vue'), 'utf8');
+  const lockRlsFix = readFileSync(
+    resolve(process.cwd(), 'supabase/migrations/20260907180000_fix_feeding_slot_lock_rls_qualification.sql'),
+    'utf8'
+  );
 
   it('clears the selected sitter through the store and picker logout', () => {
     expect(source).toContain('clearSelectedSitter');
@@ -68,6 +73,23 @@ describe('sitters store wiring', () => {
     expect(home).toContain('@logout="store.clearSelectedSitter"');
     expect(picker).toContain('Se déconnecter');
     expect(picker).toContain('emit(\'logout\')');
+  });
+
+  it('verifies feeding-slot deletes returned a row before clearing local state', () => {
+    expect(source).toContain('.delete()');
+    expect(source).toContain('.select(\'id\')');
+    expect(source).toContain('if (!deleted?.length)');
+    expect(source).toContain('Impossible de te retirer de ce jour.');
+
+    expect(adminSource).toContain('.delete()');
+    expect(adminSource).toContain('.select(\'id\')');
+    expect(adminSource).toContain('if (!deleted?.length)');
+    expect(adminSource).toContain('Impossible de retirer cette personne');
+  });
+
+  it('qualifies feeding_slots.feed_date in the lock subquery so other locked days do not block writes', () => {
+    expect(lockRlsFix).toContain('where locked.feed_date = feeding_slots.feed_date');
+    expect(lockRlsFix).not.toMatch(/where locked\.feed_date = feed_date\b/);
   });
 
   it('keeps the lock legend but uses an icon-only badge on locked days', () => {

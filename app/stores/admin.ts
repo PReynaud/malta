@@ -248,13 +248,18 @@ export const useAdminStore = defineStore('admin', () => {
     error.value = null;
 
     try {
-      const { error: deleteError } = await supabase
+      const { data: deleted, error: deleteError } = await supabase
         .from('feeding_slots')
         .delete()
-        .eq('id', slotId);
+        .eq('id', slotId)
+        .select('id');
 
       if (deleteError) {
         throw deleteError;
+      }
+
+      if (!deleted?.length) {
+        throw new Error('Impossible de retirer cette personne');
       }
 
       slots.value = slots.value.filter(item => item.id !== slotId);

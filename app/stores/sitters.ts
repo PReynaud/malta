@@ -245,13 +245,18 @@ export const useSittersStore = defineStore('sitters', () => {
 
     try {
       if (existing) {
-        const { error: deleteError } = await supabase
+        const { data: deleted, error: deleteError } = await supabase
           .from('feeding_slots')
           .delete()
-          .eq('id', existing.id);
+          .eq('id', existing.id)
+          .select('id');
 
         if (deleteError) {
           throw deleteError;
+        }
+
+        if (!deleted?.length) {
+          throw new Error('Impossible de te retirer de ce jour.');
         }
 
         slots.value = slots.value.filter(slot => slot.id !== existing.id);
