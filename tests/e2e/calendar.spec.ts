@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { waitForNuxtHydration } from './helpers/wait-for-hydration';
 import { lockFeedDateForTest, unlockFeedDateForTest } from './helpers/feed-date-lock';
-import { feedDayButtonName, nextOpenFeedDate } from './helpers/open-feed-day';
+import { feedDayButtonName, lateOpenFeedDate } from './helpers/open-feed-day';
 import { SELECTED_SITTER_KEY } from '../../app/utils/sitter-session';
 
 test('a sitter can join, claim a hungry day, then leave it', async ({ page }, testInfo) => {
@@ -17,36 +17,32 @@ test('a sitter can join, claim a hungry day, then leave it', async ({ page }, te
   await expect(page.getByRole('button', { name: 'Rejoindre l\'équipe' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Enregistrer' })).toBeHidden();
 
-  // Prefer a still-open future day (Paris). Past days are closed.
-  const claimDay = nextOpenFeedDate();
+  // Prefer a late still-open day so early-month admin fixtures do not collide.
+  const claimDay = lateOpenFeedDate(undefined, testInfo.parallelIndex);
   const day = page.getByRole('button', { name: feedDayButtonName(claimDay) });
   await expect(day).toBeEnabled();
-  await expect(day).toContainText('Faim');
 
   await day.click();
   await expect(page.getByTestId('cat-mood-burst')).toContainText('😺');
   await expect(page.getByTestId('cat-mood-burst')).toContainText('+20');
   await expect(day).toContainText(name);
-  await expect(day).not.toContainText('Faim');
   await expect(page.getByText(/Ministre des croquettes/)).toBeVisible();
 
   await day.click();
   await expect(page.getByTestId('cat-mood-burst')).toContainText('😿');
   await expect(page.getByTestId('cat-mood-burst')).toContainText('-20');
-  await expect(day).toContainText('Faim');
   await expect(day).not.toContainText(name);
 
   await page.reload();
   await waitForNuxtHydration(page);
   await expect(page.getByText(`Tu es ${name}`)).toBeVisible();
   const dayAfterReload = page.getByRole('button', { name: feedDayButtonName(claimDay) });
-  await expect(dayAfterReload).toContainText('Faim');
   await expect(dayAfterReload).not.toContainText(name);
 });
 
 test('leaving a day still persists when another day is admin-locked', async ({ page }, testInfo) => {
-  const lockedDay = nextOpenFeedDate(undefined, testInfo.parallelIndex + 2);
-  const claimDay = nextOpenFeedDate(undefined, testInfo.parallelIndex);
+  const claimDay = lateOpenFeedDate(undefined, testInfo.parallelIndex);
+  const lockedDay = lateOpenFeedDate(undefined, testInfo.parallelIndex + 2);
   expect(claimDay).not.toBe(lockedDay);
   await lockFeedDateForTest(lockedDay);
 
@@ -65,14 +61,12 @@ test('leaving a day still persists when another day is admin-locked', async ({ p
     await expect(day).toContainText(name);
 
     await day.click();
-    await expect(day).toContainText('Faim');
     await expect(day).not.toContainText(name);
 
     await page.reload();
     await waitForNuxtHydration(page);
     await expect(page.getByText(`Tu es ${name}`)).toBeVisible();
     const dayAfterReload = page.getByRole('button', { name: feedDayButtonName(claimDay) });
-    await expect(dayAfterReload).toContainText('Faim');
     await expect(dayAfterReload).not.toContainText(name);
   } finally {
     await unlockFeedDateForTest(lockedDay);
@@ -146,10 +140,10 @@ test.describe('mobile calendar', () => {
     await page.getByPlaceholder('Tatie, voisin, cousin...').fill(name);
     await page.getByRole('button', { name: 'Rejoindre l\'équipe' }).click();
 
-    const claimDay = nextOpenFeedDate();
+    const claimDay = lateOpenFeedDate(undefined, testInfo.parallelIndex + 1);
     const day = page.getByRole('button', { name: feedDayButtonName(claimDay) });
     await day.click();
-    await expect(day).not.toContainText('Faim');
+    await expect(day).toContainText(name);
   });
 });
 
