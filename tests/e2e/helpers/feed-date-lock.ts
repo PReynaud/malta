@@ -11,19 +11,30 @@ const adminHeaders = () => {
   };
 };
 
+const assertIsoDate = (feedDate: string) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(feedDate)) {
+    throw new Error(`Invalid feed date: ${feedDate}`);
+  }
+};
+
 export const lockFeedDateForTest = async (feedDate: string) => {
+  assertIsoDate(feedDate);
   const { supabaseUrl, serviceRoleKey } = adminHeaders();
 
-  const response = await fetch(`${supabaseUrl}/rest/v1/locked_feed_dates`, {
-    method: 'POST',
-    headers: {
-      'apikey': serviceRoleKey,
-      'Authorization': `Bearer ${serviceRoleKey}`,
-      'Content-Type': 'application/json',
-      'Prefer': 'resolution=merge-duplicates,return=minimal'
-    },
-    body: JSON.stringify({ feed_date: feedDate })
-  });
+  const response = await fetch(
+    `${supabaseUrl}/rest/v1/locked_feed_dates?on_conflict=feed_date`,
+    {
+      method: 'POST',
+      headers: {
+        'apikey': serviceRoleKey,
+        'Authorization': `Bearer ${serviceRoleKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates,return=minimal'
+      },
+      body: JSON.stringify({ feed_date: feedDate }),
+      signal: AbortSignal.timeout(10_000)
+    }
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to lock ${feedDate}: ${response.status} ${await response.text()}`);
@@ -31,6 +42,7 @@ export const lockFeedDateForTest = async (feedDate: string) => {
 };
 
 export const unlockFeedDateForTest = async (feedDate: string) => {
+  assertIsoDate(feedDate);
   const { supabaseUrl, serviceRoleKey } = adminHeaders();
 
   const response = await fetch(
@@ -40,7 +52,8 @@ export const unlockFeedDateForTest = async (feedDate: string) => {
       headers: {
         apikey: serviceRoleKey,
         Authorization: `Bearer ${serviceRoleKey}`
-      }
+      },
+      signal: AbortSignal.timeout(10_000)
     }
   );
 

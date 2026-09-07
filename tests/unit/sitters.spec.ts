@@ -88,7 +88,15 @@ describe('sitters store wiring', () => {
   });
 
   it('qualifies feeding_slots.feed_date in the lock subquery so other locked days do not block writes', () => {
-    expect(lockRlsFix).toContain('where locked.feed_date = feeding_slots.feed_date');
+    const insertPolicy = lockRlsFix.match(
+      /create policy "Anyone can insert open feeding slots"[\s\S]*?;/
+    )?.[0];
+    const deletePolicy = lockRlsFix.match(
+      /create policy "Anyone can delete open feeding slots"[\s\S]*?;/
+    )?.[0];
+
+    expect(insertPolicy).toContain('where locked.feed_date = feeding_slots.feed_date');
+    expect(deletePolicy).toContain('where locked.feed_date = feeding_slots.feed_date');
     expect(lockRlsFix).not.toMatch(/where locked\.feed_date = feed_date\b/);
   });
 
