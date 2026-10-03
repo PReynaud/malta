@@ -1,34 +1,41 @@
 <script setup lang="ts">
-import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
+import { computed, onUnmounted, ref, watch } from 'vue';
 import {
   adjacentPhotoIndex,
   formatMaltaPhotoPublishedAt,
   swipeNavigationDelta
 } from '@/utils/malta-photo-display';
-import { needsMarqueeLoop } from '@/utils/marquee';
-import { PATOUNE_PHOTO } from '@/utils/patounes';
+import {
+  categoryCount,
+  contestCategory,
+  CONTEST_CATEGORIES,
+  voterCategoriesForPhoto,
+  voterPhotoIdForCategory,
+  voteCountLabel,
+  type ContestCategory,
+  type ContestVote
+} from '@/utils/photo-contest';
 import type { MaltaGalleryItem } from '@/stores/malta-photos';
 import type { Sitter } from '@/stores/sitters';
 
 const props = defineProps<{
   photos: MaltaGalleryItem[];
   sitters: Sitter[];
-  loading: boolean;
+  votes: ContestVote[];
+  selectedSitterId: string | null;
+  closed: boolean;
+  voting: boolean;
   error: string | null;
 }>();
 
 const emit = defineEmits<{
-  upload: [payload: { file: File; clientX: number; clientY: number }];
+  vote: [payload: { photoId: string; category: ContestCategory }];
 }>();
 
 const SWIPE_THRESHOLD_PX = 45;
 
-const lastClick = ref({ x: 0, y: 0 });
 const selectedIndex = ref<number | null>(null);
 const selectedPhotoId = ref<string | null>(null);
-const maskEl = ref<HTMLElement | null>(null);
-const contentEl = ref<HTMLElement | null>(null);
-const looping = ref(false);
 const touchStart = ref<{ x: number; y: number; id: number } | null>(null);
 const suppressLightboxClick = ref(false);
 
@@ -40,6 +47,19 @@ const selectedPhoto = computed(() => {
 });
 
 const canNavigate = computed(() => props.photos.length > 1);
+const canVote = computed(() => Boolean(props.selectedSitterId) && !props.closed && !props.voting);
+
+const voteHint = computed(() => {
+  if (!props.selectedSitterId) {
+    return 'Choisis ton nom pour voter.';
+  }
+
+  if (props.closed) {
+    return 'Le concours est terminé.';
+  }
+
+  return '';
+});
 
 const selectedAuthorLabel = computed(() => {
   const photo = selectedPhoto.value;
@@ -57,52 +77,9 @@ const selectedPublishedAt = computed(() => {
   return formatMaltaPhotoPublishedAt(photo.created_at) ?? '';
 });
 
-function isScrollStripMode(): boolean {
-  if (!import.meta.client) {
-    return false;
-  }
-  return window.matchMedia('(max-width: 639px), (pointer: coarse)').matches;
-}
-
-function updateLooping() {
-  const mask = maskEl.value;
-  const content = contentEl.value;
-  if (!import.meta.client || !mask || !content || isScrollStripMode()) {
-    looping.value = false;
-    return;
-  }
-
-  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  looping.value = needsMarqueeLoop(content.scrollWidth, mask.clientWidth, reduceMotion);
-}
-
-watch(
-  [maskEl, contentEl],
-  ([mask, content], _previous, onCleanup) => {
-    if (!import.meta.client || !mask || !content) {
-      looping.value = false;
-      return;
-    }
-
-    const observer = new ResizeObserver(() => updateLooping());
-    observer.observe(mask);
-    observer.observe(content);
-    updateLooping();
-
-    const mediaQuery = window.matchMedia('(max-width: 639px), (pointer: coarse)');
-    const onMediaChange = () => updateLooping();
-    mediaQuery.addEventListener('change', onMediaChange);
-
-    onCleanup(() => {
-      observer.disconnect();
-      mediaQuery.removeEventListener('change', onMediaChange);
-    });
-  }
-);
-
 watch(
   () => props.photos.map(photo => photo.id).join(),
-  async () => {
+  () => {
     if (selectedPhotoId.value !== null) {
       const nextIndex = props.photos.findIndex(photo => photo.id === selectedPhotoId.value);
       if (nextIndex >= 0) {
@@ -118,8 +95,6 @@ watch(
         selectedPhotoId.value = props.photos[selectedIndex.value]?.id ?? null;
       }
     }
-    await nextTick();
-    updateLooping();
   }
 );
 
@@ -131,32 +106,6 @@ const sitterById = computed(() => {
   return map;
 });
 
-function rememberClick(event: MouseEvent) {
-  lastClick.value = { x: event.clientX, y: event.clientY };
-}
-
-function onLabelClick(event: MouseEvent) {
-  if (props.loading) {
-    event.preventDefault();
-  }
-}
-
-function onFileChange(event: Event) {
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  if (!file) {
-    return;
-  }
-
-  emit('upload', {
-    file,
-    clientX: lastClick.value.x,
-    clientY: lastClick.value.y
-  });
-
-  input.value = '';
-}
-
 function photoAlt(photo: MaltaGalleryItem): string {
   const sitterName = sitterById.value[photo.sitter_id]?.name;
   return sitterName ? `Photo de Malta par ${sitterName}` : 'Photo de Malta';
@@ -167,10 +116,28 @@ function photoAuthor(photo: MaltaGalleryItem): string {
   return sitterName ? `Par ${sitterName}` : 'Par un sitter inconnu';
 }
 
+function authorName(photo: MaltaGalleryItem): string {
+  return sitterById.value[photo.sitter_id]?.name ?? 'Inconnu';
+}
+
 function openPhoto(photo: MaltaGalleryItem) {
   const index = props.photos.findIndex(item => item.id === photo.id);
   selectedIndex.value = index >= 0 ? index : null;
   selectedPhotoId.value = index >= 0 ? photo.id : null;
+}
+
+function openPhotoById(photoId: string) {
+  const photo = props.photos.find(item => item.id === photoId);
+  if (photo) {
+    openPhoto(photo);
+  }
+}
+
+function openBallot(category: ContestCategory) {
+  const photoId = ballotPhotoId(category);
+  if (photoId) {
+    openPhotoById(photoId);
+  }
 }
 
 function closePhoto() {
@@ -185,6 +152,54 @@ function goAdjacent(delta: number) {
   }
   selectedIndex.value = adjacentPhotoIndex(selectedIndex.value, props.photos.length, delta);
   selectedPhotoId.value = props.photos[selectedIndex.value]?.id ?? null;
+}
+
+function marksFor(photoId: string): ContestCategory[] {
+  if (!props.selectedSitterId) {
+    return [];
+  }
+
+  return voterCategoriesForPhoto(props.votes, props.selectedSitterId, photoId);
+}
+
+function ballotPhotoId(category: ContestCategory): string | null {
+  if (!props.selectedSitterId) {
+    return null;
+  }
+
+  return voterPhotoIdForCategory(props.votes, props.selectedSitterId, category);
+}
+
+function ballotAuthor(category: ContestCategory): string {
+  const photoId = ballotPhotoId(category);
+  if (!photoId) {
+    return 'pas encore';
+  }
+
+  const photo = props.photos.find(item => item.id === photoId);
+  if (!photo) {
+    return 'photo retirée';
+  }
+
+  return authorName(photo);
+}
+
+function isPressed(photoId: string, category: ContestCategory): boolean {
+  return ballotPhotoId(category) === photoId;
+}
+
+function voteLabel(photoId: string, category: ContestCategory): string {
+  const count = categoryCount(props.votes, photoId, category);
+  return `${contestCategory(category).label} · ${voteCountLabel(count)}`;
+}
+
+function onVote(category: ContestCategory) {
+  const photo = selectedPhoto.value;
+  if (!photo || !canVote.value) {
+    return;
+  }
+
+  emit('vote', { photoId: photo.id, category });
 }
 
 function onLightboxKeydown(event: KeyboardEvent) {
@@ -290,58 +305,82 @@ onUnmounted(() => {
       Photos de Malta
     </h2>
     <p class="mt-1 text-sm text-muted">
-      +{{ PATOUNE_PHOTO }} patounes par photo.
+      Ouvre une photo pour la juger.
+    </p>
+    <p
+      v-if="closed"
+      class="mt-2 text-sm font-semibold text-highlighted"
+      data-testid="contest-closed"
+    >
+      Le concours est terminé. Les votes restent visibles.
     </p>
 
     <div
-      v-if="photos.length"
-      ref="maskEl"
-      class="malta-marquee-mask malta-photo-marquee mt-4 rounded-2xl border border-default bg-elevated py-3"
-      :class="{ 'malta-photo-marquee-loop': looping }"
-      data-testid="malta-photo-marquee"
+      class="mt-4 grid grid-cols-3 gap-2"
+      data-testid="contest-ballot"
     >
-      <div class="malta-marquee-track malta-photo-track">
-        <div
-          ref="contentEl"
-          class="flex gap-3"
-        >
-          <button
-            v-for="photo in photos"
-            :key="photo.id"
-            type="button"
-            class="malta-photo-frame-button touch-manipulation"
-            :aria-label="`Agrandir ${photoAlt(photo)}`"
-            @click="openPhoto(photo)"
-          >
-            <img
-              :src="photo.publicUrl"
-              :alt="photoAlt(photo)"
-              class="malta-photo-frame"
-              @load="updateLooping"
-            >
-          </button>
-        </div>
-        <div
-          v-if="looping"
-          class="flex gap-3"
-          aria-hidden="true"
-        >
+      <button
+        v-for="category in CONTEST_CATEGORIES"
+        :key="category.id"
+        type="button"
+        class="rounded-2xl border px-2 py-2 text-left text-xs font-semibold touch-manipulation sm:text-sm"
+        :class="ballotPhotoId(category.id)
+          ? 'border-secondary-400 bg-secondary-50 text-highlighted dark:bg-secondary-950/40'
+          : 'border-default bg-elevated text-muted'"
+        :data-testid="`contest-ballot-${category.id}`"
+        :disabled="!ballotPhotoId(category.id)"
+        @click="openBallot(category.id)"
+      >
+        <span class="block">{{ category.shortLabel }}</span>
+        <span class="mt-0.5 block truncate font-medium">{{ ballotAuthor(category.id) }}</span>
+      </button>
+    </div>
+
+    <div
+      v-if="photos.length"
+      class="malta-photo-grid mt-4"
+      data-testid="malta-photo-grid"
+    >
+      <button
+        v-for="photo in photos"
+        :key="photo.id"
+        type="button"
+        class="malta-photo-grid-button touch-manipulation"
+        :aria-label="`Agrandir ${photoAlt(photo)}`"
+        @click="openPhoto(photo)"
+      >
+        <span class="relative block">
           <img
-            v-for="photo in photos"
-            :key="`${photo.id}-loop`"
             :src="photo.publicUrl"
-            alt=""
-            class="malta-photo-frame"
+            :alt="photoAlt(photo)"
+            class="malta-photo-tile"
           >
-        </div>
-      </div>
+          <span
+            v-if="marksFor(photo.id).length"
+            class="absolute top-2 right-2 flex gap-1"
+          >
+            <span
+              v-for="category in marksFor(photo.id)"
+              :key="category"
+              class="rounded-full bg-black/70 px-1.5 py-0.5 text-sm"
+              :data-testid="`contest-mark-${photo.id}-${category}`"
+              :aria-label="contestCategory(category).label"
+            >
+              {{ contestCategory(category).mark }}
+            </span>
+          </span>
+        </span>
+        <span class="truncate text-xs font-semibold text-highlighted sm:text-sm">
+          {{ authorName(photo) }}
+        </span>
+      </button>
     </div>
 
     <p
       v-else
       class="mt-4 text-sm text-muted"
     >
-      Pas encore de photo. Malta attend son premier shooting.
+      Pas encore de photo.
     </p>
 
     <UAlert
@@ -349,36 +388,9 @@ onUnmounted(() => {
       class="mt-4"
       color="error"
       variant="subtle"
-      data-testid="malta-photo-error"
+      data-testid="contest-vote-error"
       :title="error"
     />
-
-    <label
-      class="malta-cta mt-4 inline-flex w-full cursor-pointer touch-manipulation sm:w-auto"
-      :class="{ 'pointer-events-none opacity-45': loading }"
-      @click="onLabelClick"
-    >
-      <input
-        class="sr-only"
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
-        aria-label="Envoyer une photo de Malta"
-        data-testid="malta-photo-input"
-        :disabled="loading"
-        @click="rememberClick"
-        @change="onFileChange"
-      >
-      <span
-        v-if="loading"
-        class="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
-        aria-hidden="true"
-      />
-      <span
-        v-else
-        aria-hidden="true"
-      >📷</span>
-      Envoyer une photo
-    </label>
 
     <div
       v-if="selectedPhoto"
@@ -433,7 +445,7 @@ onUnmounted(() => {
         <img
           :src="selectedPhoto.publicUrl"
           :alt="photoAlt(selectedPhoto)"
-          class="max-h-[75vh] max-w-full rounded-2xl object-contain shadow-lg"
+          class="max-h-[60vh] max-w-full rounded-2xl object-contain shadow-lg"
           data-testid="malta-photo-lightbox-image"
         >
         <div
@@ -453,6 +465,31 @@ onUnmounted(() => {
           >
             {{ selectedPublishedAt }}
           </p>
+        </div>
+
+        <p
+          v-if="voteHint"
+          class="text-center text-sm text-white"
+          data-testid="contest-vote-hint"
+        >
+          {{ voteHint }}
+        </p>
+
+        <div class="flex w-full max-w-md flex-col gap-2">
+          <UButton
+            v-for="category in CONTEST_CATEGORIES"
+            :key="category.id"
+            block
+            size="lg"
+            class="touch-manipulation"
+            :color="category.id === 'lamest' ? 'error' : 'primary'"
+            :variant="isPressed(selectedPhoto.id, category.id) ? 'solid' : 'outline'"
+            :disabled="!canVote"
+            :aria-pressed="isPressed(selectedPhoto.id, category.id) ? 'true' : 'false'"
+            :label="voteLabel(selectedPhoto.id, category.id)"
+            :data-testid="`contest-vote-${category.id}`"
+            @click="onVote(category.id)"
+          />
         </div>
       </div>
     </div>

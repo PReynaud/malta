@@ -4,8 +4,10 @@ import { definePageMeta } from '#imports';
 import AdminCalendar from '@/components/AdminCalendar.vue';
 import { useAdminStore } from '@/stores/admin';
 import { useAuthStore } from '@/stores/auth';
+import { usePhotoContestStore } from '@/stores/photo-contest';
 import { patouneLabel } from '@/utils/patounes';
 import { parseBonusDelta } from '@/utils/admin';
+import { CONTEST_CATEGORIES, contestTally, voteCountLabel } from '@/utils/photo-contest';
 
 definePageMeta({
   middleware: 'admin',
@@ -14,6 +16,7 @@ definePageMeta({
 
 const adminStore = useAdminStore();
 const authStore = useAuthStore();
+const contestStore = usePhotoContestStore();
 
 const query = ref('');
 const bonusDelta = ref<Record<string, string>>({});
@@ -42,8 +45,23 @@ const sitterById = computed(() => {
   return map;
 });
 
+const contestNames = computed(() => {
+  const names: Record<string, string> = {};
+  for (const sitter of adminStore.sitters) {
+    names[sitter.id] = sitter.name;
+  }
+  return names;
+});
+
+const tally = computed(() => contestTally(
+  contestStore.votes,
+  adminStore.photos.map(photo => ({ id: photo.id, sitterId: photo.sitter_id })),
+  contestNames.value
+));
+
 onMounted(() => {
   void adminStore.fetchAll();
+  void contestStore.fetchAll();
 });
 
 function openConfirm(title: string, description: string, action: () => Promise<unknown>) {
@@ -197,6 +215,69 @@ function onLockDate(isoDate: string) {
       @lock-date="onLockDate"
       @unlock-date="(isoDate) => adminStore.unlockDate(isoDate)"
     />
+
+    <section
+      class="space-y-3 rounded-3xl border border-default bg-default/80 p-4"
+      data-testid="admin-contest"
+    >
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-bold text-highlighted">
+            Concours photo
+          </h2>
+          <p class="mt-1 text-sm text-muted">
+            {{ contestStore.closed ? 'Fermé. Les votes sont figés.' : 'Ouvert. Les patounes se règlent à la main, plus bas.' }}
+          </p>
+        </div>
+        <UButton
+          color="neutral"
+          variant="subtle"
+          size="sm"
+          class="shrink-0 touch-manipulation"
+          data-testid="admin-contest-toggle"
+          :label="contestStore.closed ? 'Rouvrir le concours' : 'Fermer le concours'"
+          :disabled="contestStore.loading"
+          @click="contestStore.setClosed(!contestStore.closed)"
+        />
+      </div>
+
+      <UAlert
+        v-if="contestStore.error"
+        color="error"
+        variant="subtle"
+        :title="contestStore.error"
+      />
+
+      <div
+        v-for="category in CONTEST_CATEGORIES"
+        :key="category.id"
+        class="rounded-2xl border border-default bg-elevated p-3"
+      >
+        <h3 class="text-sm font-bold text-highlighted">
+          {{ category.label }}
+        </h3>
+        <p
+          v-if="!tally[category.id].length"
+          class="mt-1 text-sm text-muted"
+        >
+          Aucun vote.
+        </p>
+        <ol
+          v-else
+          class="mt-2 space-y-1"
+        >
+          <li
+            v-for="row in tally[category.id]"
+            :key="`${category.id}-${row.photoId}`"
+            class="flex items-center justify-between gap-3 text-sm"
+            :data-testid="`admin-contest-row-${category.id}-${row.photoId}`"
+          >
+            <span class="truncate font-medium text-highlighted">{{ row.author }}</span>
+            <span class="shrink-0 tabular-nums text-muted">{{ voteCountLabel(row.count) }}</span>
+          </li>
+        </ol>
+      </div>
+    </section>
 
     <section class="space-y-3 rounded-3xl border border-default bg-default/80 p-4">
       <h2 class="text-lg font-bold text-highlighted">

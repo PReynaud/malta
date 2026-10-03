@@ -82,6 +82,60 @@ export type Database = {
           },
         ]
       }
+      photo_contest: {
+        Row: {
+          closed: boolean
+          id: number
+        }
+        Insert: {
+          closed?: boolean
+          id: number
+        }
+        Update: {
+          closed?: boolean
+          id?: number
+        }
+        Relationships: []
+      }
+      photo_contest_votes: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          photo_id: string
+          voter_sitter_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          photo_id: string
+          voter_sitter_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          photo_id?: string
+          voter_sitter_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photo_contest_votes_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "malta_photos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photo_contest_votes_voter_sitter_id_fkey"
+            columns: ["voter_sitter_id"]
+            isOneToOne: false
+            referencedRelation: "sitters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
