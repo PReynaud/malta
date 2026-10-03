@@ -97,7 +97,7 @@ test.describe('admin dashboard', () => {
     await form.locator('input[name="password"]').fill(admin.password);
     await form.getByRole('button', { name: 'Se connecter' }).click();
 
-    await expect(page).toHaveURL(/\/admin$/);
+    await expect(page).toHaveURL(url => url.pathname === '/admin');
     await expect(page.getByRole('heading', { name: 'Admin', exact: true })).toBeVisible();
     await expect(page.getByTestId('admin-contest')).toBeVisible();
     await expect(page.getByTestId('admin-contest-toggle')).toBeVisible();
@@ -205,9 +205,12 @@ test.describe('admin dashboard', () => {
     await form.getByLabel('E-mail').fill(admin.email);
     await form.locator('input[name="password"]').fill(admin.password);
     await form.getByRole('button', { name: 'Se connecter' }).click();
-    await expect(page).toHaveURL(/\/admin$/);
+    await expect(page).toHaveURL(url => url.pathname === '/admin');
+    await expect(page.getByRole('heading', { name: 'Admin', exact: true })).toBeVisible();
 
-    await page.getByTestId(`admin-calendar-day-${targetDay}`).click();
+    const day = page.getByTestId(`admin-calendar-day-${targetDay}`);
+    await expect(day).toBeEnabled();
+    await day.click();
     const panel = page.getByTestId('admin-day-panel');
     await expect(panel).toBeVisible();
     await expect(panel.getByText(firstName)).toBeVisible();

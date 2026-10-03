@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { ADMIN_EMAIL, isAdminUser, nextBonusPatounes, nextMalusPatounes, parseBonusDelta } from '../../app/utils/admin';
+import { ADMIN_EMAIL, isAdminUser, nextBonusPatounes, nextMalusPatounes, parseBonusDelta, waitForAdminUser } from '../../app/utils/admin';
 
 describe('admin', () => {
   it('recognizes only the seeded admin email with app_metadata role', () => {
@@ -72,6 +72,44 @@ describe('admin', () => {
       app_metadata: {},
       user_metadata: { role: 'admin' }
     })).toBe(false);
+  });
+
+  it('waits until the admin claims are visible before leaving the login page', async () => {
+    await expect(waitForAdminUser(
+      () => ({ email: ADMIN_EMAIL, app_metadata: { role: 'admin' } }),
+      () => {
+        throw new Error('should not subscribe');
+      }
+    )).resolves.toBe(true);
+
+    let user: { email: string; app_metadata: { role: string } } | null = null;
+    const listeners = new Set<() => void>();
+    const pending = waitForAdminUser(
+      () => user,
+      (listener) => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      }
+    );
+
+    user = { email: ADMIN_EMAIL, app_metadata: { role: 'admin' } };
+    for (const listener of listeners) {
+      listener();
+    }
+
+    await expect(pending).resolves.toBe(true);
+  });
+
+  it('stops waiting when the admin claims never arrive', async () => {
+    vi.useFakeTimers();
+
+    try {
+      const pending = waitForAdminUser(() => null, () => () => {}, 1000);
+      await vi.advanceTimersByTimeAsync(1000);
+      await expect(pending).resolves.toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('steps bonus patounes by delta and never below zero', () => {
