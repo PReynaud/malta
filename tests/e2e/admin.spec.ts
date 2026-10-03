@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
 import { ADMIN_EMAIL } from '../../app/utils/admin';
+import { SELECTED_SITTER_KEY } from '../../app/utils/sitter-session';
 import { createE2EAccountForTest, deleteE2EAccountForTest, ensureAdminE2EAccount } from './helpers/e2e-account';
 import { seedFeedingSlot, seedMaltaPhoto, sitterIdByName } from './helpers/seed-contest';
 import { waitForNuxtHydration } from './helpers/wait-for-hydration';
@@ -185,7 +186,10 @@ test.describe('admin dashboard', () => {
     await page.getByRole('button', { name: 'Rejoindre l\'équipe' }).click();
     await expect(page.getByText(`Tu es ${firstName}`)).toBeVisible();
 
-    await page.getByRole('button', { name: 'Se déconnecter' }).click();
+    await page.evaluate(key => window.localStorage.removeItem(key), SELECTED_SITTER_KEY);
+    await page.reload();
+    await waitForNuxtHydration(page);
+
     await page.getByPlaceholder('Tatie, voisin, cousin...').fill(secondName);
     await page.getByRole('button', { name: 'Rejoindre l\'équipe' }).click();
     await expect(page.getByText(`Tu es ${secondName}`)).toBeVisible();

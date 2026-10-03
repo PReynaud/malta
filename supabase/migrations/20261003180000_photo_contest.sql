@@ -72,6 +72,14 @@ grant update on table public.photo_contest to authenticated;
 
 grant select, insert, update, delete on table public.photo_contest_votes to anon, authenticated;
 
+-- E2E helpers call PostgREST with the service role key. That role bypasses RLS
+-- but still needs table grants.
+grant select, update on table public.photo_contest to service_role;
+grant select, insert, update, delete on table public.photo_contest_votes to service_role;
+grant select on table public.sitters to service_role;
+grant select, insert on table public.malta_photos to service_role;
+grant select, insert on table public.feeding_slots to service_role;
+
 alter table public.photo_contest replica identity full;
 alter table public.photo_contest_votes replica identity full;
 

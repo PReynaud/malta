@@ -76,6 +76,8 @@ describe('photo contest votes', () => {
     expect(migration).toMatch(/photo_contest_votes_voter_category_unique/);
     expect(migration).toMatch(/enable row level security/);
     expect(migration).toMatch(/drop policy "Anyone can insert malta photos"/);
+    expect(migration).toMatch(/grant select on table public\.sitters to service_role/);
+    expect(migration).toMatch(/grant select, update on table public\.photo_contest to service_role/);
     expect(migration).not.toMatch(/bonus_patounes|malus_patounes/);
     expect(store).not.toMatch(/bonus_patounes|malus_patounes/);
     expect(page).toMatch(/Concours photo/);
