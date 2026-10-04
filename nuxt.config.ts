@@ -28,7 +28,17 @@ export default defineNuxtConfig({
   },
 
   routeRules: {
-    '/': { prerender: true }
+    '/': {
+      prerender: true,
+      headers: {
+        'cache-control': 'no-cache'
+      }
+    },
+    '/sw.js': {
+      headers: {
+        'cache-control': 'public, max-age=0, must-revalidate'
+      }
+    }
   },
 
   compatibilityDate: '2026-06-30',
@@ -75,12 +85,29 @@ export default defineNuxtConfig({
       ]
     },
     workbox: {
-      navigateFallback: '/',
-      // Admin routes are not prerendered. Without this denylist the SW
-      // intercepts /admin/login and serves the cached homepage instead.
-      navigateFallbackDenylist: [/^\/admin/],
+      // The plugin defaults to serving a precached index.html for every
+      // navigation. That keeps the previous HTML on the phone after a deploy.
+      // undefined drops that fallback. Navigations use the network, and the
+      // last successful page is only a fallback when the network fails.
+      navigateFallback: undefined,
       cleanupOutdatedCaches: true,
-      globPatterns: ['**/*.{js,css,html,png,svg,ico,txt,woff2}']
+      globPatterns: ['**/*.{js,css,png,svg,ico,txt,woff2}'],
+      runtimeCaching: [
+        {
+          urlPattern: ({ request }) => request.mode === 'navigate',
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'html-pages',
+            expiration: {
+              maxEntries: 8,
+              maxAgeSeconds: 60 * 60 * 24
+            },
+            cacheableResponse: {
+              statuses: [200]
+            }
+          }
+        }
+      ]
     },
     client: {
       installPrompt: true
