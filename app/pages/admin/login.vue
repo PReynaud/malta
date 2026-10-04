@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue';
 import { definePageMeta, navigateTo, useSupabaseUser } from '#imports';
 import { useAuthStore } from '@/stores/auth';
-import { isAdminUser } from '@/utils/admin';
+import { isAdminUser, waitForAdminUser } from '@/utils/admin';
 
 definePageMeta({
   ssr: false
@@ -18,24 +18,17 @@ const errorMessage = ref('');
 const pendingRedirect = ref(false);
 
 watch(user, (value) => {
-  if (!isAdminUser(value)) {
+  if (pendingRedirect.value || !isAdminUser(value)) {
     return;
   }
 
-  if (value && pendingRedirect.value) {
-    pendingRedirect.value = false;
-    navigateTo('/admin');
-    return;
-  }
-
-  if (value) {
-    navigateTo('/admin');
-  }
+  void navigateTo('/admin');
 }, { immediate: true });
 
 async function submit() {
   loading.value = true;
   errorMessage.value = '';
+  pendingRedirect.value = true;
 
   try {
     const result = await authStore.signIn(email.value, password.value);
@@ -53,9 +46,19 @@ async function submit() {
       return;
     }
 
-    pendingRedirect.value = true;
+    const ready = await waitForAdminUser(
+      () => user.value,
+      listener => watch(user, () => listener())
+    );
+
+    if (!ready) {
+      errorMessage.value = 'La session n\'a pas pu être confirmée. Réessaie.';
+      return;
+    }
+
     await navigateTo('/admin');
   } finally {
+    pendingRedirect.value = false;
     loading.value = false;
   }
 }

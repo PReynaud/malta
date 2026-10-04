@@ -1,11 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRuntimeConfig } from '#imports';
-import { usePatouneBanner } from '@/composables/use-patoune-banner';
 
 const config = useRuntimeConfig();
 const appName = computed(() => config.public.appName);
-const { visible, restore } = usePatouneBanner();
 </script>
 
 <template>
@@ -20,16 +18,6 @@ const { visible, restore } = usePatouneBanner();
       </NuxtLink>
 
       <div class="flex shrink-0 items-center gap-1.5">
-        <button
-          v-if="!visible"
-          type="button"
-          class="flex size-8 items-center justify-center rounded-lg border-2 border-fuchsia-600 bg-yellow-300 text-sm font-black text-fuchsia-700 shadow-[2px_2px_0_#86198f] touch-manipulation hover:bg-yellow-200"
-          aria-label="Réafficher la pub"
-          title="Réafficher la pub"
-          @click="restore"
-        >
-          ★
-        </button>
         <UColorModeButton />
       </div>
     </div>

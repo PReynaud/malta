@@ -24,6 +24,11 @@ describe('MaltaPhotoGallery lightbox wiring', () => {
     expect(component).toMatch(/Par un sitter inconnu/);
     expect(component).toMatch(/suppressLightboxClick/);
     expect(component).toMatch(/touchcancel/);
+    expect(component).toMatch(/malta-photo-grid/);
+    expect(component).toMatch(/contest-vote-\$\{category\.id\}/);
+    expect(component).toMatch(/category\.id === 'lamest'/);
+    expect(component).not.toMatch(/type="file"/);
+    expect(component).not.toMatch(/malta-photo-input/);
   });
 
   it('disables marquee animation for mobile scroll-snap strip', () => {
