@@ -39,9 +39,17 @@ describe('admin', () => {
     expect(source).toContain(`adminEmail: '${ADMIN_EMAIL}'`);
   });
 
-  it('does not let the PWA serve the homepage for /admin navigations', () => {
+  it('loads html from the network so a deploy is not stuck in the PWA cache', () => {
     const source = readFileSync(resolve(process.cwd(), 'nuxt.config.ts'), 'utf8');
-    expect(source).toContain('navigateFallbackDenylist: [/^\\/admin/]');
+
+    expect(source).toContain('navigateFallback: undefined');
+    expect(source).not.toContain('navigateFallbackDenylist');
+    expect(source).toContain('handler: \'NetworkFirst\'');
+    expect(source).toContain('cacheName: \'html-pages\'');
+    expect(source).not.toMatch(/globPatterns:.*html/);
+    expect(source).toContain('\'/sw.js\'');
+    expect(source).toContain('max-age=0, must-revalidate');
+    expect(source).toContain('\'cache-control\': \'no-cache\'');
   });
 
   it('retries unauthorized admin loads and keeps partial data', () => {
