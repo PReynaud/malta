@@ -4,12 +4,11 @@ import { useSupabaseClient } from '#imports';
 import { getErrorMessage, isUnauthorizedError } from '@/utils/error-message';
 import { nextBonusPatounes, nextMalusPatounes } from '@/utils/admin';
 import { groupSlotsByDate, isFeedDateAdminLocked, needsSitter } from '@/utils/calendar';
+import { maltaPhotoStaticUrl } from '@/utils/malta-photo-display';
 import { rankSitters } from '@/utils/patounes';
 import type { Database } from '@/types/database.types';
 import type { MaltaGalleryItem, MaltaPhoto } from '@/stores/malta-photos';
 import type { FeedingSlot, LockedFeedDate, Sitter } from '@/stores/sitters';
-
-const BUCKET = 'malta-photos';
 
 export const useAdminStore = defineStore('admin', () => {
   const supabase = useSupabaseClient<Database>();
@@ -33,13 +32,10 @@ export const useAdminStore = defineStore('admin', () => {
   });
 
   const galleryItems = computed((): MaltaGalleryItem[] => {
-    return photos.value.map((photo) => {
-      const { data } = supabase.storage.from(BUCKET).getPublicUrl(photo.storage_path);
-      return {
-        ...photo,
-        publicUrl: data.publicUrl
-      };
-    });
+    return photos.value.map(photo => ({
+      ...photo,
+      publicUrl: maltaPhotoStaticUrl(photo.storage_path)
+    }));
   });
 
   const rankedSitters = computed(() => {
@@ -220,11 +216,6 @@ export const useAdminStore = defineStore('admin', () => {
         throw deleteError;
       }
 
-      const { error: storageError } = await supabase.storage.from(BUCKET).remove([photo.storage_path]);
-      if (storageError) {
-        throw storageError;
-      }
-
       photos.value = photos.value.filter(item => item.id !== photoId);
       return { error: null };
     } catch (err: unknown) {
@@ -351,9 +342,6 @@ export const useAdminStore = defineStore('admin', () => {
 
     loading.value = true;
     error.value = null;
-    const storagePaths = photos.value
-      .filter(photo => photo.sitter_id === sitterId)
-      .map(photo => photo.storage_path);
 
     try {
       const { error: deleteError } = await supabase
@@ -363,13 +351,6 @@ export const useAdminStore = defineStore('admin', () => {
 
       if (deleteError) {
         throw deleteError;
-      }
-
-      if (storagePaths.length > 0) {
-        const { error: storageError } = await supabase.storage.from(BUCKET).remove(storagePaths);
-        if (storageError) {
-          throw storageError;
-        }
       }
 
       sitters.value = sitters.value.filter(item => item.id !== sitterId);

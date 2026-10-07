@@ -1,6 +1,23 @@
 const DEFAULT_TZ = 'Europe/Paris';
 
 /**
+ * Maps the persisted Storage-relative path to its committed same-origin asset.
+ */
+export function maltaPhotoStaticUrl(storagePath: string): string {
+  const segments = storagePath
+    .trim()
+    .replaceAll('\\', '/')
+    .split('/')
+    .filter(segment => segment.length > 0 && segment !== '.');
+
+  if (segments.length === 0 || segments.includes('..')) {
+    throw new Error('Invalid Malta photo storage path');
+  }
+
+  return `/malta-photos/${segments.map(segment => encodeURIComponent(segment)).join('/')}`;
+}
+
+/**
  * Formats a photo publication timestamp for French UI (Europe/Paris by default).
  * Invalid ISO values return null so callers can hide the caption line.
  */

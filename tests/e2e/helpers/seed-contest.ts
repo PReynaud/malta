@@ -1,6 +1,15 @@
-import { readFileSync } from 'node:fs';
-import { randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
+import { resolve, sep } from 'node:path';
 import { assertLocalSupabaseUrl, LOCAL_SUPABASE_SERVICE_ROLE_KEY, LOCAL_SUPABASE_URL } from '../local-supabase';
+
+export const MALTA_PHOTO_FIXTURES = [
+  '007ba76a-d86b-4d48-830c-ccd97641d941/0f0339b5-b8b2-404e-8966-bf459a5c02d7.jpg',
+  '007ba76a-d86b-4d48-830c-ccd97641d941/180ff757-695a-449a-a736-30dcdf794bc8.jpg',
+  '007ba76a-d86b-4d48-830c-ccd97641d941/2024f183-0069-4ead-8f8a-888d301316d8.jpg',
+  '007ba76a-d86b-4d48-830c-ccd97641d941/23d85d0b-7318-4a5d-8843-83397f71c588.jpg',
+  '007ba76a-d86b-4d48-830c-ccd97641d941/2ae1c175-d41c-4cbd-8a06-c9542dc15028.jpg',
+  '007ba76a-d86b-4d48-830c-ccd97641d941/2c9a0032-6f94-4a1d-8cfb-b7156f277d79.jpg'
+] as const;
 
 const adminHeaders = () => {
   const supabaseUrl = process.env.NUXT_PUBLIC_SUPABASE_URL || LOCAL_SUPABASE_URL;
@@ -59,23 +68,27 @@ export const seedFeedingSlot = async (sitterId: string, feedDate: string) => {
   }
 };
 
-export const seedMaltaPhoto = async (sitterId: string, filePath: string) => {
+export const seedMaltaPhoto = async (sitterId: string, storagePath: string) => {
   const { supabaseUrl, serviceRoleKey } = adminHeaders();
-  const storagePath = `${sitterId}/${randomUUID()}.png`;
-  const bytes = readFileSync(filePath);
+  const assetRoot = resolve(process.cwd(), 'public/malta-photos');
+  const assetPath = resolve(assetRoot, storagePath);
+  if (!assetPath.startsWith(`${assetRoot}${sep}`) || !existsSync(assetPath)) {
+    throw new Error(`Committed Malta photo fixture is missing: ${storagePath}`);
+  }
 
-  const upload = await fetch(
-    `${supabaseUrl}/storage/v1/object/malta-photos/${storagePath}`,
+  const removeExisting = await fetch(
+    `${supabaseUrl}/rest/v1/malta_photos?storage_path=eq.${encodeURIComponent(storagePath)}`,
     {
-      method: 'POST',
-      headers: serviceHeaders(serviceRoleKey, { 'Content-Type': 'image/png' }),
-      body: bytes,
+      method: 'DELETE',
+      headers: serviceHeaders(serviceRoleKey, { Prefer: 'return=minimal' }),
       signal: AbortSignal.timeout(10_000)
     }
   );
 
-  if (!upload.ok) {
-    throw new Error(`Failed to seed photo file: ${upload.status} ${await upload.text()}`);
+  if (!removeExisting.ok) {
+    throw new Error(
+      `Failed to clear stale photo fixture: ${removeExisting.status} ${await removeExisting.text()}`
+    );
   }
 
   const insert = await fetch(`${supabaseUrl}/rest/v1/malta_photos`, {

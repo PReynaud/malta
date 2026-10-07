@@ -50,6 +50,8 @@ describe('admin', () => {
     expect(source).toContain('\'/sw.js\'');
     expect(source).toContain('max-age=0, must-revalidate');
     expect(source).toContain('\'cache-control\': \'no-cache\'');
+    expect(source).toContain('\'/malta-photos/**\'');
+    expect(source).toContain('public, max-age=31536000, immutable');
   });
 
   it('retries unauthorized admin loads and keeps partial data', () => {

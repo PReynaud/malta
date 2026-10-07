@@ -8,6 +8,8 @@ describe('MaltaPhotoGallery lightbox wiring', () => {
     'utf8'
   );
   const css = readFileSync(resolve(process.cwd(), 'app/assets/css/main.css'), 'utf8');
+  const photoStore = readFileSync(resolve(process.cwd(), 'app/stores/malta-photos.ts'), 'utf8');
+  const adminStore = readFileSync(resolve(process.cwd(), 'app/stores/admin.ts'), 'utf8');
 
   it('uses index-based lightbox state with wrap navigation and metadata caption', () => {
     expect(component).toMatch(/selectedIndex/);
@@ -29,6 +31,13 @@ describe('MaltaPhotoGallery lightbox wiring', () => {
     expect(component).toMatch(/category\.id === 'lamest'/);
     expect(component).not.toMatch(/type="file"/);
     expect(component).not.toMatch(/malta-photo-input/);
+  });
+
+  it('uses static same-origin URLs without runtime Storage mutations', () => {
+    expect(photoStore).toMatch(/maltaPhotoStaticUrl\(photo\.storage_path\)/);
+    expect(adminStore).toMatch(/maltaPhotoStaticUrl\(photo\.storage_path\)/);
+    expect(photoStore).not.toMatch(/storage\.from|uploadPhoto|uploading/);
+    expect(adminStore).not.toMatch(/storage\.from/);
   });
 
   it('disables marquee animation for mobile scroll-snap strip', () => {
