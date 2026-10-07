@@ -38,6 +38,11 @@ export default defineNuxtConfig({
       headers: {
         'cache-control': 'public, max-age=0, must-revalidate'
       }
+    },
+    '/malta-photos/**': {
+      headers: {
+        'cache-control': 'public, max-age=31536000, immutable'
+      }
     }
   },
 

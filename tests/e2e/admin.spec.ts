@@ -1,12 +1,14 @@
 import { expect, test } from '@playwright/test';
-import { fileURLToPath } from 'node:url';
 import { ADMIN_EMAIL } from '../../app/utils/admin';
 import { SELECTED_SITTER_KEY } from '../../app/utils/sitter-session';
 import { createE2EAccountForTest, deleteE2EAccountForTest, ensureAdminE2EAccount } from './helpers/e2e-account';
-import { seedFeedingSlot, seedMaltaPhoto, sitterIdByName } from './helpers/seed-contest';
+import {
+  MALTA_PHOTO_FIXTURES,
+  seedFeedingSlot,
+  seedMaltaPhoto,
+  sitterIdByName
+} from './helpers/seed-contest';
 import { waitForNuxtHydration } from './helpers/wait-for-hydration';
-
-const maltaPhotoPath = fileURLToPath(new URL('./fixtures/malta.png', import.meta.url));
 
 test.describe('admin dashboard', () => {
   test.use({ viewport: { width: 390, height: 844 } });
@@ -73,6 +75,12 @@ test.describe('admin dashboard', () => {
   test('lets the admin adjust bonus patounes and delete a photo and a sitter', async ({ page }, testInfo) => {
     const suffix = `${testInfo.parallelIndex}-${testInfo.retry}-${testInfo.workerIndex}`;
     const sitterName = `Admin-${suffix}`;
+    const storageMutationRequests: string[] = [];
+    page.on('request', (request) => {
+      if (request.url().includes('/storage/v1/') && request.method() !== 'GET') {
+        storageMutationRequests.push(`${request.method()} ${request.url()}`);
+      }
+    });
 
     await page.goto('/');
     await waitForNuxtHydration(page);
@@ -82,10 +90,14 @@ test.describe('admin dashboard', () => {
     await expect(page.getByText(`Tu es ${sitterName}`)).toBeVisible();
 
     const sitterId = await sitterIdByName(sitterName);
-    await seedMaltaPhoto(sitterId, maltaPhotoPath);
+    await seedMaltaPhoto(sitterId, MALTA_PHOTO_FIXTURES[5]);
     await page.reload();
     await waitForNuxtHydration(page);
-    await expect(page.getByRole('img', { name: `Photo de Malta par ${sitterName}` })).toBeVisible();
+    const photo = page.getByRole('img', { name: `Photo de Malta par ${sitterName}` });
+    await expect(photo).toBeVisible();
+    await expect(photo).toHaveAttribute('src', /^\/malta-photos\//);
+    await expect(photo).toHaveJSProperty('complete', true);
+    expect(await photo.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
     await expect(page.getByRole('listitem').filter({ hasText: sitterName }).getByText('2 patounes', { exact: true })).toBeVisible();
 
     await page.goto('/admin/login');
@@ -171,6 +183,7 @@ test.describe('admin dashboard', () => {
     await page.getByRole('button', { name: 'Déconnexion' }).click();
     await expect(page).toHaveURL(/\/admin\/login/);
     await expect(page.getByRole('button', { name: 'S\'inscrire' })).toHaveCount(0);
+    expect(storageMutationRequests).toEqual([]);
   });
 
   test('lets the admin remove an extra sitter and lock a day', async ({ page }, testInfo) => {

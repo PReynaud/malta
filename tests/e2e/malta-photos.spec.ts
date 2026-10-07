@@ -1,9 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { fileURLToPath } from 'node:url';
 import { waitForNuxtHydration } from './helpers/wait-for-hydration';
-import { seedMaltaPhoto, setContestClosedForTest, sitterIdByName } from './helpers/seed-contest';
-
-const maltaPhotoPath = fileURLToPath(new URL('./fixtures/malta.png', import.meta.url));
+import {
+  MALTA_PHOTO_FIXTURES,
+  seedMaltaPhoto,
+  setContestClosedForTest,
+  sitterIdByName
+} from './helpers/seed-contest';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -23,8 +25,10 @@ test('a selected sitter can vote, move that vote, and retract it without gaining
   await expect(page.getByText(`Tu es ${name}`)).toBeVisible();
 
   const sitterId = await sitterIdByName(name);
-  const olderPhotoId = await seedMaltaPhoto(sitterId, maltaPhotoPath);
-  const newerPhotoId = await seedMaltaPhoto(sitterId, maltaPhotoPath);
+  const stalePhotoId = await seedMaltaPhoto(sitterId, MALTA_PHOTO_FIXTURES[0]);
+  const olderPhotoId = await seedMaltaPhoto(sitterId, MALTA_PHOTO_FIXTURES[0]);
+  const newerPhotoId = await seedMaltaPhoto(sitterId, MALTA_PHOTO_FIXTURES[1]);
+  expect(olderPhotoId).not.toBe(stalePhotoId);
 
   await page.reload();
   await waitForNuxtHydration(page);
@@ -77,19 +81,30 @@ test('lightbox shows publication metadata and navigates between photos', async (
   await expect(page.getByText(`Tu es ${name}`)).toBeVisible();
 
   const sitterId = await sitterIdByName(name);
-  await seedMaltaPhoto(sitterId, maltaPhotoPath);
-  await seedMaltaPhoto(sitterId, maltaPhotoPath);
+  await seedMaltaPhoto(sitterId, MALTA_PHOTO_FIXTURES[2]);
+  await seedMaltaPhoto(sitterId, MALTA_PHOTO_FIXTURES[3]);
   await page.reload();
   await waitForNuxtHydration(page);
 
   const ownThumbs = page.getByRole('button', { name: `Agrandir Photo de Malta par ${name}` });
   await expect(ownThumbs).toHaveCount(2);
 
-  const firstSrc = await ownThumbs.nth(0).locator('img').getAttribute('src');
-  const secondSrc = await ownThumbs.nth(1).locator('img').getAttribute('src');
+  const firstImage = ownThumbs.nth(0).locator('img');
+  const secondImage = ownThumbs.nth(1).locator('img');
+  await expect(firstImage).toHaveJSProperty('complete', true);
+  await expect(secondImage).toHaveJSProperty('complete', true);
+  expect(await firstImage.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+  expect(await secondImage.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+
+  const firstSrc = await firstImage.getAttribute('src');
+  const secondSrc = await secondImage.getAttribute('src');
   expect(firstSrc).toBeTruthy();
   expect(secondSrc).toBeTruthy();
   expect(firstSrc).not.toBe(secondSrc);
+  expect(firstSrc).toMatch(/^\/malta-photos\//);
+  expect(secondSrc).toMatch(/^\/malta-photos\//);
+  expect(firstSrc).not.toContain('/storage/v1/');
+  expect(secondSrc).not.toContain('/storage/v1/');
 
   await ownThumbs.nth(0).click();
   const lightbox = page.getByTestId('malta-photo-lightbox');
@@ -130,7 +145,7 @@ test('a closed contest keeps the vote visible and blocks a new one', async ({ pa
   await expect(page.getByText(`Tu es ${name}`)).toBeVisible();
 
   const sitterId = await sitterIdByName(name);
-  const photoId = await seedMaltaPhoto(sitterId, maltaPhotoPath);
+  const photoId = await seedMaltaPhoto(sitterId, MALTA_PHOTO_FIXTURES[4]);
   await page.reload();
   await waitForNuxtHydration(page);
 

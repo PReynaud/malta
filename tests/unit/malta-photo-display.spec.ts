@@ -2,8 +2,31 @@ import { describe, expect, it } from 'vitest';
 import {
   adjacentPhotoIndex,
   formatMaltaPhotoPublishedAt,
+  maltaPhotoStaticUrl,
   swipeNavigationDelta
 } from '../../app/utils/malta-photo-display';
+
+describe('maltaPhotoStaticUrl', () => {
+  it('maps a relative storage path to the same-origin static directory', () => {
+    expect(maltaPhotoStaticUrl('sitter-id/file.jpg')).toBe(
+      '/malta-photos/sitter-id/file.jpg'
+    );
+  });
+
+  it('normalizes separators and safely encodes path segments', () => {
+    expect(maltaPhotoStaticUrl('/sitter-id//Malta photo #1.jpg')).toBe(
+      '/malta-photos/sitter-id/Malta%20photo%20%231.jpg'
+    );
+    expect(maltaPhotoStaticUrl('sitter-id\\file.jpg')).toBe(
+      '/malta-photos/sitter-id/file.jpg'
+    );
+  });
+
+  it('rejects empty and parent-traversal paths', () => {
+    expect(() => maltaPhotoStaticUrl('')).toThrow(/storage path/i);
+    expect(() => maltaPhotoStaticUrl('../file.jpg')).toThrow(/storage path/i);
+  });
+});
 
 describe('formatMaltaPhotoPublishedAt', () => {
   it('formats a known ISO timestamp in French Europe/Paris local time', () => {
