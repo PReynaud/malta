@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   categoryCount,
   contestTally,
+  photoVoteMarks,
   voteCountLabel,
   voteMutation,
   voterCategoriesForPhoto,
@@ -63,6 +64,61 @@ describe('photo contest votes', () => {
     expect(tally.cutest).toEqual([{ photoId: 'photo-1', author: 'Camille', count: 2 }]);
     expect(tally.funniest).toEqual([]);
     expect(tally.lamest).toEqual([{ photoId: 'photo-2', author: 'Alex', count: 1 }]);
+  });
+
+  it('lists vote marks in category order and skips zeroes', () => {
+    const mixed: ContestVote[] = [
+      { id: 'm1', voter_sitter_id: 'sitter-b', photo_id: 'photo-1', category: 'funniest' },
+      { id: 'm2', voter_sitter_id: 'sitter-a', photo_id: 'photo-1', category: 'cutest' },
+      { id: 'm3', voter_sitter_id: 'sitter-c', photo_id: 'photo-1', category: 'cutest' },
+      { id: 'm4', voter_sitter_id: 'sitter-a', photo_id: 'photo-2', category: 'lamest' }
+    ];
+
+    expect(photoVoteMarks(mixed, 'photo-1')).toEqual([
+      { category: 'cutest', count: 2 },
+      { category: 'funniest', count: 1 }
+    ]);
+    expect(photoVoteMarks(mixed, 'photo-2')).toEqual([
+      { category: 'lamest', count: 1 }
+    ]);
+    expect(photoVoteMarks(mixed, 'photo-3')).toEqual([]);
+    expect(photoVoteMarks([], 'photo-1')).toEqual([]);
+  });
+
+  it('shows a voted photo in each of its categories and omits a photo with zero votes', () => {
+    const mixed: ContestVote[] = [
+      { id: 'm1', voter_sitter_id: 'sitter-b', photo_id: 'photo-1', category: 'funniest' },
+      { id: 'm2', voter_sitter_id: 'sitter-a', photo_id: 'photo-1', category: 'cutest' },
+      { id: 'm3', voter_sitter_id: 'sitter-c', photo_id: 'photo-1', category: 'cutest' }
+    ];
+    const tally = contestTally(
+      mixed,
+      [
+        { id: 'photo-1', sitterId: 'author-1' },
+        { id: 'photo-2', sitterId: 'author-1' }
+      ],
+      { 'author-1': 'Camille' }
+    );
+
+    expect(tally.cutest).toEqual([{ photoId: 'photo-1', author: 'Camille', count: 2 }]);
+    expect(tally.funniest).toEqual([{ photoId: 'photo-1', author: 'Camille', count: 1 }]);
+    expect(tally.lamest).toEqual([]);
+    expect(tally.cutest.some(row => row.photoId === 'photo-2')).toBe(false);
+    expect(tally.funniest.some(row => row.photoId === 'photo-2')).toBe(false);
+    expect(tally.lamest.some(row => row.photoId === 'photo-2')).toBe(false);
+    expect(photoVoteMarks(mixed, 'photo-2')).toEqual([]);
+  });
+
+  it('keeps Photo retirée and the count when votes point at a missing photo', () => {
+    const tally = contestTally(
+      [{ id: 'gone-1', voter_sitter_id: 'sitter-a', photo_id: 'gone', category: 'cutest' }],
+      [],
+      {}
+    );
+
+    expect(tally.cutest).toEqual([{ photoId: 'gone', author: 'Photo retirée', count: 1 }]);
+    expect(tally.funniest).toEqual([]);
+    expect(tally.lamest).toEqual([]);
   });
 
   it('keeps contest votes from writing patounes and drops public photo upload', () => {
