@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
 import { resolve, sep } from 'node:path';
+import type { ContestCategory } from '../../../app/utils/photo-contest';
 import { assertLocalSupabaseUrl, LOCAL_SUPABASE_SERVICE_ROLE_KEY, LOCAL_SUPABASE_URL } from '../local-supabase';
 
 export const MALTA_PHOTO_FIXTURES = [
@@ -112,6 +113,44 @@ export const seedMaltaPhoto = async (sitterId: string, storagePath: string) => {
   }
 
   return photoId;
+};
+
+export const seedContestVote = async (
+  voterSitterId: string,
+  photoId: string,
+  category: ContestCategory
+) => {
+  const { supabaseUrl, serviceRoleKey } = adminHeaders();
+  const response = await fetch(`${supabaseUrl}/rest/v1/photo_contest_votes`, {
+    method: 'POST',
+    headers: serviceHeaders(serviceRoleKey, {
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    }),
+    body: JSON.stringify({
+      voter_sitter_id: voterSitterId,
+      photo_id: photoId,
+      category
+    }),
+    signal: AbortSignal.timeout(10_000)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to seed contest vote: ${response.status} ${await response.text()}`);
+  }
+};
+
+export const deleteSeededMaltaPhoto = async (photoId: string) => {
+  const { supabaseUrl, serviceRoleKey } = adminHeaders();
+  const response = await fetch(`${supabaseUrl}/rest/v1/malta_photos?id=eq.${photoId}`, {
+    method: 'DELETE',
+    headers: serviceHeaders(serviceRoleKey, { Prefer: 'return=minimal' }),
+    signal: AbortSignal.timeout(10_000)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete seeded photo: ${response.status} ${await response.text()}`);
+  }
 };
 
 export const setContestClosedForTest = async (closed: boolean) => {

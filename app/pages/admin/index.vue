@@ -7,7 +7,7 @@ import { useAuthStore } from '@/stores/auth';
 import { usePhotoContestStore } from '@/stores/photo-contest';
 import { patouneLabel } from '@/utils/patounes';
 import { parseBonusDelta } from '@/utils/admin';
-import { CONTEST_CATEGORIES, contestTally, voteCountLabel } from '@/utils/photo-contest';
+import { CONTEST_CATEGORIES, contestCategory, contestTally, photoVoteMarks, voteCountLabel } from '@/utils/photo-contest';
 
 definePageMeta({
   middleware: 'admin',
@@ -58,6 +58,34 @@ const tally = computed(() => contestTally(
   adminStore.photos.map(photo => ({ id: photo.id, sitterId: photo.sitter_id })),
   contestNames.value
 ));
+
+const galleryByPhotoId = computed(() => {
+  const photos: Record<string, (typeof adminStore.galleryItems)[number]> = {};
+  for (const photo of adminStore.galleryItems) {
+    photos[photo.id] = photo;
+  }
+  return photos;
+});
+
+const voteMarksByPhotoId = computed(() => {
+  const marks: Record<string, ReturnType<typeof photoVoteMarks>> = {};
+  for (const photo of adminStore.galleryItems) {
+    marks[photo.id] = photoVoteMarks(contestStore.votes, photo.id);
+  }
+  return marks;
+});
+
+function maltaPhotoAlt(sitterId: string): string {
+  return `Photo de Malta par ${sitterById.value[sitterId]?.name ?? 'inconnu'}`;
+}
+
+function contestPhotoUrl(photoId: string): string | null {
+  return galleryByPhotoId.value[photoId]?.publicUrl || null;
+}
+
+function contestPhotoAlt(photoId: string): string {
+  return maltaPhotoAlt(galleryByPhotoId.value[photoId]?.sitter_id ?? '');
+}
 
 onMounted(() => {
   void adminStore.fetchAll();
@@ -272,7 +300,16 @@ function onLockDate(isoDate: string) {
             class="flex items-center justify-between gap-3 text-sm"
             :data-testid="`admin-contest-row-${category.id}-${row.photoId}`"
           >
-            <span class="truncate font-medium text-highlighted">{{ row.author }}</span>
+            <span class="flex min-w-0 items-center gap-2">
+              <img
+                v-if="contestPhotoUrl(row.photoId)"
+                :src="contestPhotoUrl(row.photoId) || ''"
+                :alt="contestPhotoAlt(row.photoId)"
+                class="aspect-square h-12 w-12 shrink-0 rounded-lg object-cover"
+                :data-testid="`admin-contest-photo-${category.id}-${row.photoId}`"
+              >
+              <span class="truncate font-medium text-highlighted">{{ row.author }}</span>
+            </span>
             <span class="shrink-0 tabular-nums text-muted">{{ voteCountLabel(row.count) }}</span>
           </li>
         </ol>
@@ -451,13 +488,27 @@ function onLockDate(isoDate: string) {
         >
           <img
             :src="photo.publicUrl"
-            :alt="`Photo de Malta par ${sitterById[photo.sitter_id]?.name ?? 'inconnu'}`"
+            :alt="maltaPhotoAlt(photo.sitter_id)"
             class="aspect-square w-full object-cover"
           >
           <div class="space-y-2 p-2">
             <p class="truncate text-xs font-medium text-highlighted">
               {{ sitterById[photo.sitter_id]?.name ?? 'Inconnu' }}
             </p>
+            <ul
+              v-if="voteMarksByPhotoId[photo.id]?.length"
+              class="space-y-0.5"
+              :data-testid="`admin-photo-votes-${photo.id}`"
+            >
+              <li
+                v-for="mark in voteMarksByPhotoId[photo.id]"
+                :key="mark.category"
+                class="text-xs text-muted"
+                :data-testid="`admin-photo-vote-${photo.id}-${mark.category}`"
+              >
+                {{ contestCategory(mark.category).mark }} {{ voteCountLabel(mark.count) }}
+              </li>
+            </ul>
             <UButton
               color="error"
               variant="subtle"

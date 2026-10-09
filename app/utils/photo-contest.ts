@@ -106,6 +106,24 @@ export function categoryCount(
   return votes.filter(vote => vote.photo_id === photoId && vote.category === category).length;
 }
 
+export interface PhotoVoteMark {
+  category: ContestCategory;
+  count: number;
+}
+
+export function photoVoteMarks(votes: ContestVote[], photoId: string): PhotoVoteMark[] {
+  const marks: PhotoVoteMark[] = [];
+
+  for (const category of CONTEST_CATEGORIES) {
+    const count = categoryCount(votes, photoId, category.id);
+    if (count > 0) {
+      marks.push({ category: category.id, count });
+    }
+  }
+
+  return marks;
+}
+
 export function voterPhotoIdForCategory(
   votes: ContestVote[],
   voterSitterId: string,
